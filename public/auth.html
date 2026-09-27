@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الدخول - صحنك</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header><div class="wrap nav"><a class="logo" href="/">صحنك</a></div></header>
+<div class="wrap auth-wrap">
+  <h2 style="margin-bottom:4px;">الدخول إلى صحنك</h2>
+  <p style="color:var(--sub);font-size:14px;margin-top:0;">يجب إنشاء حساب قبل الوصول إلى لوحة الإدارة</p>
+
+  <div class="tabs" style="margin-bottom:16px;">
+    <div class="tab active" id="tabSignup" onclick="switchMode('signup')">إنشاء حساب</div>
+    <div class="tab" id="tabLogin" onclick="switchMode('login')">تسجيل الدخول</div>
+  </div>
+
+  <!-- SIGNUP STEP 1 -->
+  <div class="card" id="step1">
+    <div class="tabs" style="margin-bottom:12px;">
+      <div class="tab active" id="mEmail" onclick="switchMethod('email')">بريد إلكتروني</div>
+      <div class="tab" id="mPhone" onclick="switchMethod('phone')">رقم الهاتف</div>
+    </div>
+    <label id="idLabel">البريد الإلكتروني</label>
+    <input id="id1" type="email" placeholder="name@example.com">
+    <label>كلمة المرور</label>
+    <input id="pass1" type="password" placeholder="8 أحرف على الأقل">
+    <label>تأكيد كلمة المرور</label>
+    <input id="pass2" type="password" placeholder="أعد كتابة كلمة المرور">
+    <button class="btn" style="width:100%;margin-top:14px;" onclick="requestCode()">إرسال رمز التحقق</button>
+    <div id="err1" class="err"></div>
+  </div>
+
+  <!-- SIGNUP STEP 2 -->
+  <div class="card" id="step2" style="display:none;">
+    <p style="margin:0 0 6px;">أرسلنا رمزًا مكوّنًا من 6 أرقام إلى <b id="idShown"></b></p>
+    <div class="demo-note" id="devNote" style="display:none;">
+      📧 الخادم يعمل حاليًا بدون إعداد SMTP/Twilio حقيقي (وضع تجريبي)، لذلك اطبع الرمز في الطرفية (Terminal) الخاصة بالخادم بدل إرساله فعليًا. أضِف بيانات SMTP أو Twilio في ملف .env لتفعيل الإرسال الحقيقي.
+    </div>
+    <label>أدخل رمز التحقق</label>
+    <input id="code" maxlength="6" placeholder="000000">
+    <button class="btn" style="width:100%;margin-top:14px;" onclick="verifyCode()">تأكيد وإنشاء الحساب</button>
+    <div id="err2" class="err"></div>
+    <button class="btn ghost small" style="width:100%;margin-top:10px;" onclick="backToStep1()">رجوع</button>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="card" id="loginStep" style="display:none;">
+    <div class="tabs" style="margin-bottom:12px;">
+      <div class="tab active" id="lmEmail" onclick="switchLoginMethod('email')">بريد إلكتروني</div>
+      <div class="tab" id="lmPhone" onclick="switchLoginMethod('phone')">رقم الهاتف</div>
+    </div>
+    <label id="loginIdLabel">البريد الإلكتروني</label>
+    <input id="loginId" type="email" placeholder="name@example.com">
+    <label>كلمة المرور</label>
+    <input id="loginPass" type="password" placeholder="كلمة المرور">
+    <button class="btn" style="width:100%;margin-top:14px;" onclick="doLogin()">تسجيل الدخول</button>
+    <div id="loginErr" class="err"></div>
+  </div>
+</div>
+
+<script>
+let method = 'email', loginMethod = 'email', pendingId = null;
+
+function switchMode(mode){
+  document.getElementById('tabSignup').classList.toggle('active', mode==='signup');
+  document.getElementById('tabLogin').classList.toggle('active', mode==='login');
+  document.getElementById('step1').style.display = mode==='signup' ? 'block':'none';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('loginStep').style.display = mode==='login' ? 'block':'none';
+}
+function switchMethod(m){
+  method = m;
+  document.getElementById('mEmail').classList.toggle('active', m==='email');
+  document.getElementById('mPhone').classList.toggle('active', m==='phone');
+  const inp = document.getElementById('id1');
+  if(m==='email'){ inp.type='email'; inp.placeholder='name@example.com'; document.getElementById('idLabel').textContent='البريد الإلكتروني'; }
+  else{ inp.type='tel'; inp.placeholder='+216XXXXXXXX'; document.getElementById('idLabel').textContent='رقم الهاتف'; }
+  inp.value='';
+}
+function switchLoginMethod(m){
+  loginMethod = m;
+  document.getElementById('lmEmail').classList.toggle('active', m==='email');
+  document.getElementById('lmPhone').classList.toggle('active', m==='phone');
+  const inp = document.getElementById('loginId');
+  if(m==='email'){ inp.type='email'; inp.placeholder='name@example.com'; document.getElementById('loginIdLabel').textContent='البريد الإلكتروني'; }
+  else{ inp.type='tel'; inp.placeholder='+216XXXXXXXX'; document.getElementById('loginIdLabel').textContent='رقم الهاتف'; }
+  inp.value='';
+}
+
+async function requestCode(){
+  const identifier = document.getElementById('id1').value.trim();
+  const password = document.getElementById('pass1').value;
+  const confirmPassword = document.getElementById('pass2').value;
+  const err = document.getElementById('err1');
+  err.textContent='';
+  try{
+    const r = await fetch('/api/signup/request-code', {
+      method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
+      body: JSON.stringify({ identifier, password, confirmPassword, method })
+    });
+    const data = await r.json();
+    if(!r.ok){ err.textContent = data.error || 'حدث خطأ'; return; }
+    pendingId = identifier;
+    document.getElementById('idShown').textContent = identifier;
+    document.getElementById('devNote').style.display = data.simulated ? 'block' : 'none';
+    document.getElementById('step1').style.display='none';
+    document.getElementById('step2').style.display='block';
+  }catch(e){ err.textContent = 'تعذّر الاتصال بالخادم. تأكد أن الخادم يعمل.'; }
+}
+function backToStep1(){
+  document.getElementById('step1').style.display='block';
+  document.getElementById('step2').style.display='none';
+  document.getElementById('code').value=''; document.getElementById('err2').textContent='';
+}
+async function verifyCode(){
+  const code = document.getElementById('code').value.trim();
+  const err = document.getElementById('err2');
+  err.textContent='';
+  try{
+    const r = await fetch('/api/signup/verify', {
+      method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
+      body: JSON.stringify({ identifier: pendingId, code })
+    });
+    const data = await r.json();
+    if(!r.ok){ err.textContent = data.error || 'حدث خطأ'; return; }
+    window.location.href = data.redirect || '/dashboard.html';
+  }catch(e){ err.textContent = 'تعذّر الاتصال بالخادم.'; }
+}
+async function doLogin(){
+  const identifier = document.getElementById('loginId').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginErr');
+  err.textContent='';
+  try{
+    const r = await fetch('/api/login', {
+      method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
+      body: JSON.stringify({ identifier, password })
+    });
+    const data = await r.json();
+    if(!r.ok){ err.textContent = data.error || 'حدث خطأ'; return; }
+    window.location.href = data.redirect || '/dashboard.html';
+  }catch(e){ err.textContent = 'تعذّر الاتصال بالخادم.'; }
+}
+</script>
+</body>
+</html>

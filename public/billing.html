@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الاشتراك - صحنك</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header><div class="wrap nav"><a class="logo" href="/">صحنك</a></div></header>
+<div class="wrap auth-wrap">
+  <h2 style="margin-bottom:4px;">اشترك للوصول إلى لوحة الإدارة</h2>
+  <p style="color:var(--sub);font-size:14px;margin-top:0;">خطة واحدة بسيطة تشمل كل ميزات صحنك</p>
+  <div class="card">
+    <div style="text-align:center;">
+      <div style="font-size:34px;font-weight:900;color:var(--brand);" id="priceLabel">جارٍ التحميل...</div>
+      <div style="color:var(--sub);font-size:13px;">الفوترة تتم عبر Flouci بأمان</div>
+    </div>
+    <ul style="margin:16px 0;padding-inline-start:20px;color:var(--sub);font-size:14px;line-height:2;">
+      <li>منيو رقمية غير محدودة الأصناف</li>
+      <li>رابط عام ورمز QR قابل للتنزيل</li>
+      <li>مقترحات أصناف بالذكاء الاصطناعي</li>
+    </ul>
+    <button class="btn" id="subBtn" style="width:100%;" onclick="startCheckout()">الاشتراك والدفع عبر Flouci</button>
+    <div id="err" class="err"></div>
+  </div>
+</div>
+<script>
+if(new URLSearchParams(window.location.search).get('canceled')){
+  document.getElementById('err').textContent = 'تم إلغاء عملية الدفع، يمكنك المحاولة من جديد.';
+}
+async function startCheckout(){
+  const btn = document.getElementById('subBtn');
+  const err = document.getElementById('err');
+  btn.disabled = true; btn.textContent = 'جارٍ التحويل إلى صفحة الدفع...';
+  err.textContent = '';
+  try{
+    const r = await fetch('/api/billing/create-checkout-session', { method:'POST', credentials:'include' });
+    const data = await r.json();
+    if(!r.ok){ err.textContent = data.error || 'حدث خطأ'; btn.disabled=false; btn.textContent='الاشتراك والدفع عبر Flouci'; return; }
+    window.location.href = data.url;
+  }catch(e){
+    err.textContent = 'تعذّر الاتصال بالخادم.';
+    btn.disabled=false; btn.textContent='الاشتراك والدفع عبر Flouci';
+  }
+}
+(async ()=>{
+  const meRes = await fetch('/api/me', { credentials:'include' });
+  if(!meRes.ok){ window.location.href = '/auth.html'; return; }
+  const me = await meRes.json();
+  if(me.subscribed){ window.location.href = '/dashboard.html'; return; }
+  document.getElementById('priceLabel').textContent = 'اشترك الآن';
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>المنيو - صحنك</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap public-page" id="wrap" style="padding-top:20px;">جارٍ التحميل...</div>
+<script>
+function escapeHtml(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+async function load(){
+  const slug = new URLSearchParams(window.location.search).get('slug');
+  const wrap = document.getElementById('wrap');
+  if(!slug){ wrap.innerHTML = '<div class="empty">أضف ?slug=اسم-المطعم إلى الرابط.</div>'; return; }
+  const r = await fetch('/api/public/' + encodeURIComponent(slug));
+  if(!r.ok){ wrap.innerHTML = '<div class="empty">هذا المنيو غير متاح حاليًا.</div>'; return; }
+  const m = await r.json();
+  wrap.innerHTML = `
+    <div class="menu-cover"></div>
+    <div class="menu-head">
+      <h2 style="margin:6px 0 2px;">${escapeHtml(m.name||'اسم المطعم')}</h2>
+      <p style="color:var(--sub);margin:0;font-size:13px;">${escapeHtml(m.desc||'')}</p>
+    </div>
+    ${m.sections.map(s=>`
+      <div class="menu-section-title">${escapeHtml(s.title)}</div>
+      ${s.items.map(it=>`
+        <div class="menu-item ${it.avail?'':'unavail'}">
+          <div><h4 style="margin:0 0 4px;font-size:15px;">${escapeHtml(it.name)}</h4>
+            <p style="margin:0;color:var(--sub);font-size:13px;">${escapeHtml(it.desc)}</p></div>
+          <div class="p">${escapeHtml(it.price)} د.ت</div>
+        </div>
+      `).join('')}
+    `).join('')}
+  `;
+}
+load();
+</script>
+</body>
+</html>

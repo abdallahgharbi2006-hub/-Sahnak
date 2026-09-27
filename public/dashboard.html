@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لوحة الإدارة - صحنك</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header><div class="wrap nav">
+  <a class="logo" href="/">صحنك</a>
+  <a class="btn small ghost" href="/menu.html" target="_blank">معاينة أي منيو منشور</a>
+</div></header>
+
+<div class="wrap" style="padding:24px 0 60px;">
+  <div class="userbar" id="userbar">جارٍ التحقق من جلستك...</div>
+
+  <div class="card">
+    <h3>بيانات المطعم (حسابك الخاص)</h3>
+    <div class="row">
+      <div><label>اسم المطعم</label><input id="rname" placeholder="مقهى الدار"></div>
+      <div><label>الرابط المختصر</label><input id="rslug" placeholder="dar-cafe"></div>
+    </div>
+    <label>وصف مختصر (اختياري)</label>
+    <textarea id="rdesc" rows="2" placeholder="مقهى ومطعم يقدم المشروبات والفطور والحلويات"></textarea>
+  </div>
+
+  <div class="card">
+    <div class="section-head">
+      <h3 style="margin:0">أقسام المنيو والأصناف (الأسعار بالدينار التونسي)</h3>
+      <button class="btn small" onclick="addSection()">+ إضافة قسم</button>
+    </div>
+    <div id="sections"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-head">
+      <div>الحالة: <span class="badge" id="statusBadge"></span></div>
+      <button class="btn" id="publishBtn" onclick="togglePublish()"></button>
+    </div>
+    <div id="linkArea" style="margin-top:14px;"></div>
+  </div>
+  <div id="saveMsg" class="ok"></div>
+</div>
+
+<script>
+let restaurant = null;
+
+async function boot(){
+  const meRes = await fetch('/api/me', { credentials:'include' });
+  if(!meRes.ok){ window.location.href = '/auth.html'; return; }
+  const me = await meRes.json();
+  if(!me.subscribed){ window.location.href = '/billing.html'; return; }
+  document.getElementById('userbar').innerHTML =
+    `<span>مسجّل الدخول بحساب: <b style="color:var(--ink)">${escapeHtml(me.identifier)}</b> · <span style="color:var(--accent);font-weight:700;">مشترك ✅</span></span>
+     <button class="btn ghost small" onclick="logout()">تسجيل الخروج</button>`;
+
+  const rRes = await fetch('/api/restaurant', { credentials:'include' });
+  restaurant = await rRes.json();
+  document.getElementById('rname').value = restaurant.name || '';
+  document.getElementById('rslug').value = restaurant.slug || '';
+  document.getElementById('rdesc').value = restaurant.desc || '';
+  renderSections(); renderStatus(); renderLink();
+}
+async function logout(){
+  await fetch('/api/logout', { method:'POST', credentials:'include' });
+  window.location.href = '/';
+}
+function uid(){ return Date.now()+Math.floor(Math.random()*1000); }
+function escapeAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
+function escapeHtml(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+async function saveRestaurant(extra){
+  restaurant.name = document.getElementById('rname').value;
+  restaurant.slug = document.getElementById('rslug').value.trim();
+  restaurant.desc = document.getElementById('rdesc').value;
+  Object.assign(restaurant, extra || {});
+  const r = await fetch('/api/restaurant', {
+    method:'PUT', headers:{'Content-Type':'application/json'}, credentials:'include',
+    body: JSON.stringify(restaurant)
+  });
+  const data = await r.json();
+  const msg = document.getElementById('saveMsg');
+  if(!r.ok){ msg.className='err'; msg.textContent = data.error; return false; }
+  restaurant = data;
+  msg.className='ok'; msg.textContent='تم الحفظ ✓';
+  setTimeout(()=> msg.textContent='', 1500);
+  return true;
+}
+['rname','rslug','rdesc'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', ()=> saveRestaurant());
+});
+
+function addSection(){ restaurant.sections.push({id:uid(), title:'قسم جديد', items:[]}); saveRestaurant().then(renderSections); }
+function removeSection(id){ restaurant.sections = restaurant.sections.filter(s=>s.id!==id); saveRestaurant().then(renderSections); }
+function addItem(sid){ restaurant.sections.find(s=>s.id===sid).items.push({id:uid(), name:'صنف جديد', price:'0', desc:'', avail:true}); saveRestaurant().then(renderSections); }
+function removeItem(sid,iid){ const s=restaurant.sections.find(s=>s.id===sid); s.items=s.items.filter(i=>i.id!==iid); saveRestaurant().then(renderSections); }
+function updateSectionTitle(sid,val){ restaurant.sections.find(s=>s.id===sid).title=val; saveRestaurant(); }
+function updateItem(sid,iid,field,val){ restaurant.sections.find(s=>s.id===sid).items.find(i=>i.id===iid)[field]=val; saveRestaurant(); }
+function toggleAvail(sid,iid){ const it=restaurant.sections.find(s=>s.id===sid).items.find(i=>i.id===iid); it.avail=!it.avail; saveRestaurant().then(renderSections); }
+
+function renderSections(){
+  const wrap = document.getElementById('sections'); wrap.innerHTML='';
+  if(restaurant.sections.length===0){ wrap.innerHTML='<div class="empty">لا توجد أقسام بعد.</div>'; }
+  restaurant.sections.forEach(s=>{
+    const div = document.createElement('div'); div.className='section-block';
+    div.innerHTML = `
+      <div class="section-head">
+        <input value="${escapeAttr(s.title)}" onchange="updateSectionTitle(${s.id}, this.value)">
+        <div>
+          <button class="iconbtn" onclick="addItem(${s.id})">➕ صنف</button>
+          <button class="iconbtn" onclick="removeSection(${s.id})">🗑</button>
+        </div>
+      </div>
+      ${s.items.map(it=>`
+        <div class="item">
+          <div><input value="${escapeAttr(it.name)}" onchange="updateItem(${s.id},${it.id},'name',this.value)"></div>
+          <div class="price"><input value="${escapeAttr(it.price)}" placeholder="د.ت" onchange="updateItem(${s.id},${it.id},'price',this.value)"></div>
+          <div><input placeholder="وصف قصير" value="${escapeAttr(it.desc)}" onchange="updateItem(${s.id},${it.id},'desc',this.value)"></div>
+          <span class="pill ${it.avail?'on':'off'}" onclick="toggleAvail(${s.id},${it.id})">${it.avail?'متاح':'مخفي'}</span>
+          <button class="iconbtn" onclick="removeItem(${s.id},${it.id})">🗑</button>
+        </div>
+      `).join('') || '<div class="empty">لا توجد أصناف.</div>'}
+    `;
+    wrap.appendChild(div);
+  });
+}
+async function togglePublish(){
+  if(!restaurant.slug){ alert('أدخل الرابط المختصر أولًا.'); return; }
+  const ok = await saveRestaurant({ published: !restaurant.published });
+  if(ok){ renderStatus(); renderLink(); }
+}
+function renderStatus(){
+  const b = document.getElementById('statusBadge'); const btn = document.getElementById('publishBtn');
+  if(restaurant.published){ b.textContent='منشور'; b.className='badge pub'; btn.textContent='إلغاء النشر'; }
+  else{ b.textContent='مسودة'; b.className='badge draft'; btn.textContent='نشر المنيو'; }
+}
+function renderLink(){
+  const area = document.getElementById('linkArea');
+  if(!restaurant.published || !restaurant.slug){ area.innerHTML=''; return; }
+  const link = window.location.origin + '/menu.html?slug=' + encodeURIComponent(restaurant.slug);
+  area.innerHTML = `<label>الرابط العام</label><div class="linkbox"><span>${escapeHtml(link)}</span></div>
+    <div class="qrwrap"><div id="qrcode"></div>
+      <div style="margin-top:8px;"><a class="btn ghost small" href="${link}" target="_blank">فتح معاينة المنيو</a></div>
+    </div>`;
+  document.getElementById('qrcode').innerHTML='';
+  new QRCode(document.getElementById('qrcode'), { text: link, width:140, height:140 });
+}
+boot();
+</script>
+</body>
+</html>
