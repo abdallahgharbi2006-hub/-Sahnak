@@ -5,7 +5,7 @@ const DB_PATH = path.join(__dirname, 'db.json');
 
 function readDB() {
   if (!fs.existsSync(DB_PATH)) {
-    const initial = { users: [], restaurants: [], pendingCodes: [], pendingPayments: [] };
+    const initial = { users: [], restaurants: [], pendingCodes: [], paymentClaims: [] };
     fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
     return initial;
   }

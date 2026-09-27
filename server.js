@@ -7,11 +7,11 @@ const jwt = require('jsonwebtoken');
 const { readDB, writeDB } = require('./db');
 const { sendVerificationEmail } = require('./mailer');
 const { sendVerificationSms } = require('./sms');
-const { generatePayment, verifyPayment } = require('./flouci');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+const ADMIN_JWT_SECRET = JWT_SECRET + '_admin_panel';
 const CODE_TTL_MS = 10 * 60 * 1000;
 const APP_URL = process.env.APP_URL || `http://localhost:${PORT}`;
 const SUBSCRIPTION_PRICE_MILLIMES = Number(process.env.SUBSCRIPTION_PRICE_MILLIMES || 29000); // 29.000 د.ت افتراضيًا
@@ -43,6 +43,17 @@ function subscriptionRequired(req, res, next) {
     return res.status(402).json({ error: 'يجب الاشتراك أولًا للوصول إلى هذه الخدمة', code: 'SUBSCRIPTION_REQUIRED' });
   }
   next();
+}
+
+function adminRequired(req, res, next) {
+  const token = req.cookies.sahnak_admin_token;
+  if (!token) return res.status(401).json({ error: 'يجب تسجيل دخول المشرف' });
+  try {
+    jwt.verify(token, ADMIN_JWT_SECRET);
+    next();
+  } catch {
+    return res.status(401).json({ error: 'جلسة مشرف غير صالحة، سجّل الدخول من جديد' });
+  }
 }
 
 // ---------------- AUTH: SIGNUP (email or phone) ----------------
@@ -125,77 +136,89 @@ app.get('/api/me', authRequired, (req, res) => {
   res.json({ identifier: user.identifier, method: user.method, subscribed: !!user.subscribed });
 });
 
-// ---------------- BILLING (real Flouci payment) ----------------
-app.post('/api/billing/create-checkout-session', authRequired, async (req, res) => {
-  if (!process.env.FLOUCI_PUBLIC_KEY || !process.env.FLOUCI_PRIVATE_KEY) {
-    return res.status(500).json({ error: 'لم يتم إعداد Flouci بعد، أضف FLOUCI_PUBLIC_KEY و FLOUCI_PRIVATE_KEY في ملف .env' });
-  }
-  try {
-    const { paymentId, link } = await generatePayment({
-      amountMillimes: SUBSCRIPTION_PRICE_MILLIMES,
-      developerTrackingId: req.userId,
-      successLink: `${APP_URL}/api/billing/flouci-success`,
-      failLink: `${APP_URL}/billing.html?canceled=1`,
-      webhook: `${APP_URL}/api/billing/flouci-webhook`,
-      clientId: req.userId
-    });
-    const db = readDB();
-    db.pendingPayments = db.pendingPayments || [];
-    db.pendingPayments.push({ paymentId, userId: req.userId, createdAt: Date.now() });
-    writeDB(db);
-    res.json({ url: link });
-  } catch (e) {
-    res.status(500).json({ error: 'تعذّر إنشاء جلسة الدفع: ' + e.message });
-  }
+// ---------------- BILLING (manual transfer, confirmed by the site owner) ----------------
+app.get('/api/billing/info', (req, res) => {
+  res.json({
+    amountText: `${(SUBSCRIPTION_PRICE_MILLIMES / 1000).toFixed(3)} د.ت`,
+    phone: process.env.PAYMENT_PHONE || '',
+    rib: process.env.PAYMENT_RIB || '',
+    label: process.env.PAYMENT_METHOD_LABEL || 'Flouci',
+    instructions: process.env.PAYMENT_INSTRUCTIONS || ''
+  });
 });
 
-// يعيد Flouci توجيه المستخدم إلى هنا بعد الدفع الناجح؛ نتحقق فعليًا من الحالة قبل تفعيل الاشتراك
-app.get('/api/billing/flouci-success', async (req, res) => {
-  let userId = null;
-  try { userId = jwt.verify(req.cookies.sahnak_token, JWT_SECRET).uid; } catch { /* not logged in / cookie missing */ }
-  if (userId) {
-    const db = readDB();
-    db.pendingPayments = db.pendingPayments || [];
-    const pending = [...db.pendingPayments].reverse().find(p => p.userId === userId);
-    if (pending) {
-      try {
-        const result = await verifyPayment(pending.paymentId);
-        if (result.status === 'SUCCESS') {
-          const user = db.users.find(u => u.id === userId);
-          if (user) user.subscribed = true;
-          db.pendingPayments = db.pendingPayments.filter(p => p.paymentId !== pending.paymentId);
-          writeDB(db);
-        }
-      } catch (e) {
-        console.error('تعذّر التحقق من الدفع عبر Flouci:', e.message);
-      }
-    }
-  }
-  res.redirect('/dashboard.html');
+app.post('/api/billing/manual-claim', authRequired, (req, res) => {
+  const db = readDB();
+  db.paymentClaims = db.paymentClaims || [];
+  const existingPending = db.paymentClaims.find(c => c.userId === req.userId && c.status === 'pending');
+  if (existingPending) return res.json({ ok: true, claim: existingPending });
+
+  const user = db.users.find(u => u.id === req.userId);
+  const claim = {
+    id: 'c_' + Date.now(),
+    userId: req.userId,
+    identifier: user ? user.identifier : '',
+    note: (req.body && String(req.body.note || '').slice(0, 300)) || '',
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  };
+  db.paymentClaims.push(claim);
+  writeDB(db);
+  res.json({ ok: true, claim });
 });
 
-// إشعار خادم-إلى-خادم من Flouci عند اكتمال الدفع (أكثر موثوقية من الاعتماد على التوجيه وحده)
-app.post('/api/billing/flouci-webhook', async (req, res) => {
-  try {
-    const paymentId = req.body.payment_id || (req.body.result && req.body.result.payment_id) || req.body.id;
-    if (paymentId) {
-      const result = await verifyPayment(paymentId);
-      if (result.status === 'SUCCESS') {
-        const db = readDB();
-        db.pendingPayments = db.pendingPayments || [];
-        const pending = db.pendingPayments.find(p => p.paymentId === paymentId);
-        if (pending) {
-          const user = db.users.find(u => u.id === pending.userId);
-          if (user) user.subscribed = true;
-          db.pendingPayments = db.pendingPayments.filter(p => p.paymentId !== paymentId);
-          writeDB(db);
-        }
-      }
-    }
-  } catch (e) {
-    console.error('خطأ في webhook الخاص بـ Flouci:', e.message);
+app.get('/api/billing/my-claim', authRequired, (req, res) => {
+  const db = readDB();
+  db.paymentClaims = db.paymentClaims || [];
+  const claim = [...db.paymentClaims].reverse().find(c => c.userId === req.userId);
+  res.json({ claim: claim || null });
+});
+
+// ---------------- ADMIN PANEL (site owner reviews and approves payment claims manually) ----------------
+app.post('/api/admin/login', (req, res) => {
+  if (!process.env.ADMIN_PASSWORD) {
+    return res.status(500).json({ error: 'لم يتم إعداد ADMIN_PASSWORD في ملف .env' });
   }
-  res.json({ received: true });
+  const { password } = req.body || {};
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'كلمة مرور المشرف غير صحيحة' });
+  }
+  const token = jwt.sign({ admin: true }, ADMIN_JWT_SECRET, { expiresIn: '7d' });
+  res.cookie('sahnak_admin_token', token, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 3600 * 1000 });
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/logout', (req, res) => {
+  res.clearCookie('sahnak_admin_token');
+  res.json({ ok: true });
+});
+
+app.get('/api/admin/claims', adminRequired, (req, res) => {
+  const db = readDB();
+  db.paymentClaims = db.paymentClaims || [];
+  res.json({ claims: [...db.paymentClaims].reverse() });
+});
+
+app.post('/api/admin/claims/:id/approve', adminRequired, (req, res) => {
+  const db = readDB();
+  db.paymentClaims = db.paymentClaims || [];
+  const claim = db.paymentClaims.find(c => c.id === req.params.id);
+  if (!claim) return res.status(404).json({ error: 'الطلب غير موجود' });
+  claim.status = 'approved';
+  const user = db.users.find(u => u.id === claim.userId);
+  if (user) user.subscribed = true;
+  writeDB(db);
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/claims/:id/reject', adminRequired, (req, res) => {
+  const db = readDB();
+  db.paymentClaims = db.paymentClaims || [];
+  const claim = db.paymentClaims.find(c => c.id === req.params.id);
+  if (!claim) return res.status(404).json({ error: 'الطلب غير موجود' });
+  claim.status = 'rejected';
+  writeDB(db);
+  res.json({ ok: true });
 });
 
 // ---------------- RESTAURANT (protected: requires login AND active subscription) ----------------

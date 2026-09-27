@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لوحة المشرف - صحنك</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<style>
+.claim-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-top:1px solid var(--line);padding:14px 0;flex-wrap:wrap;}
+.claim-row:first-child{border-top:none;}
+.claim-info b{display:block;}
+.claim-info span{color:var(--sub);font-size:13px;}
+.claim-actions{display:flex;gap:8px;}
+</style>
+</head>
+<body>
+<header><div class="wrap nav"><a class="logo" href="/">صحنك</a></div></header>
+<div class="wrap" style="padding:24px 0 60px;max-width:680px;">
+
+  <div class="card" id="loginCard">
+    <h3>دخول المشرف</h3>
+    <label>كلمة مرور المشرف</label>
+    <input id="pw" type="password">
+    <button class="btn" style="width:100%;margin-top:14px;" onclick="adminLogin()">دخول</button>
+    <div id="loginErr" class="err"></div>
+  </div>
+
+  <div id="panel" style="display:none;">
+    <div class="userbar">
+      <span>لوحة مراجعة طلبات الاشتراك</span>
+      <button class="btn ghost small" onclick="adminLogout()">تسجيل الخروج</button>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 10px;">الطلبات المعلّقة</h3>
+      <div id="pendingList"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 10px;">سجل الطلبات (الكل)</h3>
+      <div id="allList"></div>
+    </div>
+  </div>
+</div>
+<script>
+function escapeHtml(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+async function adminLogin(){
+  const password = document.getElementById('pw').value;
+  const err = document.getElementById('loginErr');
+  try{
+    const r = await fetch('/api/admin/login', {
+      method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
+      body: JSON.stringify({ password })
+    });
+    const data = await r.json();
+    if(!r.ok){ err.textContent = data.error || 'خطأ'; return; }
+    err.textContent = '';
+    showPanel();
+  }catch(e){ err.textContent = 'تعذّر الاتصال بالخادم.'; }
+}
+async function adminLogout(){
+  await fetch('/api/admin/logout', { method:'POST', credentials:'include' });
+  document.getElementById('panel').style.display = 'none';
+  document.getElementById('loginCard').style.display = 'block';
+}
+async function showPanel(){
+  document.getElementById('loginCard').style.display = 'none';
+  document.getElementById('panel').style.display = 'block';
+  await refresh();
+}
+async function refresh(){
+  const r = await fetch('/api/admin/claims', { credentials:'include' });
+  if(!r.ok){ document.getElementById('panel').style.display='none'; document.getElementById('loginCard').style.display='block'; return; }
+  const { claims } = await r.json();
+  const pending = claims.filter(c => c.status === 'pending');
+  document.getElementById('pendingList').innerHTML = pending.length ? pending.map(rowHtml).join('') :
+    '<div class="empty">لا توجد طلبات معلّقة حاليًا.</div>';
+  document.getElementById('allList').innerHTML = claims.length ? claims.map(rowHtml).join('') :
+    '<div class="empty">لا توجد طلبات بعد.</div>';
+}
+function statusLabel(s){
+  if(s==='approved') return '<span style="color:var(--accent);font-weight:700;">مقبول ✅</span>';
+  if(s==='rejected') return '<span style="color:#c93b3b;font-weight:700;">مرفوض ✕</span>';
+  return '<span style="color:var(--draft);font-weight:700;">قيد المراجعة</span>';
+}
+function rowHtml(c){
+  const date = new Date(c.createdAt).toLocaleString('ar-TN');
+  const actions = c.status === 'pending' ? `
+    <div class="claim-actions">
+      <button class="btn small" onclick="act('${c.id}','approve')">قبول</button>
+      <button class="btn ghost small" onclick="act('${c.id}','reject')">رفض</button>
+    </div>` : '';
+  return `<div class="claim-row">
+    <div class="claim-info">
+      <b>${escapeHtml(c.identifier)}</b>
+      <span>${date}</span>
+      ${c.note ? `<span>ملاحظة: ${escapeHtml(c.note)}</span>` : ''}
+      <span>${statusLabel(c.status)}</span>
+    </div>
+    ${actions}
+  </div>`;
+}
+async function act(id, action){
+  await fetch(`/api/admin/claims/${id}/${action}`, { method:'POST', credentials:'include' });
+  refresh();
+}
+// إن كانت الجلسة صالحة بالفعل (زيارة سابقة) انتقل للوحة مباشرة
+fetch('/api/admin/claims', { credentials:'include' }).then(r => { if(r.ok) showPanel(); });
+</script>
+</body>
+</html>
