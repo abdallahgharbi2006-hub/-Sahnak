@@ -35,6 +35,22 @@
   </div>
 
   <div class="card">
+    <h3 data-i18n="branding_title">تخصيص مظهر المنيو</h3>
+    <label data-i18n="brand_color_label">لون الهوية (يُستخدم في رمز QR وألوان الصفحة)</label>
+    <div class="color-row">
+      <input type="color" id="brandColor" value="#e0632a">
+      <span id="brandColorHex" style="font-family:monospace;color:var(--sub);">#e0632a</span>
+    </div>
+
+    <label data-i18n="cover_image_label" style="margin-top:16px;">صورة غلاف المنيو (اختياري)</label>
+    <div class="cover-preview empty" id="coverPreview"><span data-i18n="cover_hint">ستظهر هذه الصورة كخلفية أعلى صفحة المنيو العامة.</span></div>
+    <div class="row" style="margin-top:10px;">
+      <input type="file" id="coverInput" accept="image/*" style="flex:2;">
+      <button class="btn ghost small" id="removeCoverBtn" onclick="removeCover()" style="display:none;flex:0 0 auto;" data-i18n="btn_remove_cover">إزالة الصورة</button>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="section-head">
       <h3 style="margin:0" data-i18n="sections_title">أقسام المنيو والأصناف (الأسعار بالدينار التونسي)</h3>
       <button class="btn small" onclick="addSection()" data-i18n="btn_add_section">+ إضافة قسم</button>
@@ -69,7 +85,42 @@ async function boot(){
   document.getElementById('rname').value = restaurant.name || '';
   document.getElementById('rslug').value = restaurant.slug || '';
   document.getElementById('rdesc').value = restaurant.desc || '';
+  document.getElementById('brandColor').value = restaurant.brandColor || '#e0632a';
+  document.getElementById('brandColorHex').textContent = restaurant.brandColor || '#e0632a';
+  renderCoverPreview();
   renderSections(); renderStatus(); renderLink();
+}
+function renderCoverPreview(){
+  const box = document.getElementById('coverPreview');
+  const removeBtn = document.getElementById('removeCoverBtn');
+  if(restaurant.coverImage){
+    box.classList.remove('empty');
+    box.innerHTML = `<img src="${restaurant.coverImage}" alt="cover">`;
+    removeBtn.style.display = 'inline-block';
+  }else{
+    box.classList.add('empty');
+    box.innerHTML = `<span data-i18n="cover_hint">${t('cover_hint')}</span>`;
+    removeBtn.style.display = 'none';
+  }
+}
+document.getElementById('brandColor').addEventListener('input', function(){
+  document.getElementById('brandColorHex').textContent = this.value;
+});
+document.getElementById('brandColor').addEventListener('change', function(){
+  saveRestaurant({ brandColor: this.value }).then(renderLink);
+});
+document.getElementById('coverInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 3_000_000){ alert(t('err_IMAGE_TOO_LARGE')); e.target.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = function(){
+    saveRestaurant({ coverImage: reader.result }).then(()=>{ renderCoverPreview(); });
+  };
+  reader.readAsDataURL(file);
+});
+function removeCover(){
+  saveRestaurant({ coverImage: null }).then(renderCoverPreview);
 }
 function renderUserbar(identifier){
   document.getElementById('userbar').innerHTML =
@@ -153,12 +204,94 @@ function renderLink(){
   const area = document.getElementById('linkArea');
   if(!restaurant.published || !restaurant.slug){ area.innerHTML=''; return; }
   const link = window.location.origin + '/menu.html?slug=' + encodeURIComponent(restaurant.slug);
+  const color = restaurant.brandColor || '#e0632a';
   area.innerHTML = `<label>${t('public_link')}</label><div class="linkbox"><span>${escapeHtml(link)}</span></div>
-    <div class="qrwrap"><div id="qrcode"></div>
-      <div style="margin-top:8px;"><a class="btn ghost small" href="${link}" target="_blank">${t('btn_preview')}</a></div>
+    <div class="qrwrap">
+      <div class="qr-card" style="--qr-color:${color};">
+        <div class="r-name">${escapeHtml(restaurant.name || t('lbl_rname'))}</div>
+        <div class="qr-box" id="qrcode"></div>
+        <div class="scan-caption">${t('scan_caption')}</div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <a class="btn ghost small" href="${link}" target="_blank">${t('btn_preview')}</a>
+        <button class="btn small" onclick="downloadSticker()">${t('btn_download_sticker')}</button>
+      </div>
+      <div class="hint" style="text-align:center;">${t('sticker_hint')}</div>
     </div>`;
   document.getElementById('qrcode').innerHTML='';
-  new QRCode(document.getElementById('qrcode'), { text: link, width:140, height:140 });
+  new QRCode(document.getElementById('qrcode'), { text: link, width:150, height:150, colorDark: color, colorLight:'#ffffff' });
+}
+
+async function downloadSticker(){
+  const link = window.location.origin + '/menu.html?slug=' + encodeURIComponent(restaurant.slug);
+  const color = restaurant.brandColor || '#e0632a';
+  const name = restaurant.name || t('lbl_rname');
+
+  // نولّد رمز QR بحجم أكبر في عنصر مؤقت غير ظاهر لاستخراج الصورة منه
+  const hidden = document.createElement('div');
+  hidden.style.position = 'fixed'; hidden.style.left = '-9999px';
+  document.body.appendChild(hidden);
+  new QRCode(hidden, { text: link, width: 360, height: 360, colorDark: color, colorLight: '#ffffff' });
+  await new Promise(res => setTimeout(res, 60)); // مهلة قصيرة لإتمام رسم QRCode.js
+
+  const qrImgEl = hidden.querySelector('canvas') || hidden.querySelector('img');
+  if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch(e){} }
+
+  const W = 900, H = 1180;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // خلفية بيضاء وإطار مزخرف بلون الهوية
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = color; ctx.lineWidth = 14;
+  ctx.strokeRect(24, 24, W-48, H-48);
+  ctx.strokeStyle = color; ctx.globalAlpha = .35; ctx.lineWidth = 3;
+  ctx.strokeRect(46, 46, W-92, H-92);
+  ctx.globalAlpha = 1;
+
+  // اسم المطعم
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.font = "900 56px Tajawal, sans-serif";
+  wrapCanvasText(ctx, name, W/2, 160, W-160, 64);
+
+  // رمز QR في المنتصف
+  const qrSize = 560, qrX = (W - qrSize)/2, qrY = 300;
+  ctx.fillStyle = '#fff'; ctx.fillRect(qrX-16, qrY-16, qrSize+32, qrSize+32);
+  ctx.strokeStyle = '#eee2d6'; ctx.lineWidth = 2; ctx.strokeRect(qrX-16, qrY-16, qrSize+32, qrSize+32);
+  if (qrImgEl) ctx.drawImage(qrImgEl, qrX, qrY, qrSize, qrSize);
+
+  // نص الدعوة للمسح
+  ctx.fillStyle = '#7a6a5c';
+  ctx.font = "700 34px Tajawal, sans-serif";
+  ctx.fillText(t('scan_caption'), W/2, qrY + qrSize + 80);
+
+  // شعار صحنك أسفل الملصق
+  ctx.fillStyle = color;
+  ctx.font = "900 26px Tajawal, sans-serif";
+  ctx.fillText(t('logo'), W/2, H - 60);
+
+  document.body.removeChild(hidden);
+
+  const a = document.createElement('a');
+  a.download = (restaurant.slug || 'sahnak') + '-qr-sticker.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+function wrapCanvasText(ctx, text, cx, startY, maxWidth, lineHeight){
+  const words = String(text).split(' ');
+  let line = '', y = startY;
+  const lines = [];
+  for(const w of words){
+    const test = line ? line + ' ' + w : w;
+    if(ctx.measureText(test).width > maxWidth && line){ lines.push(line); line = w; }
+    else line = test;
+  }
+  if(line) lines.push(line);
+  const totalH = (lines.length-1) * lineHeight;
+  y = startY - totalH/2 + lineHeight/2;
+  lines.forEach(l => { ctx.fillText(l, cx, y); y += lineHeight; });
 }
 document.addEventListener('sahnak:lang-changed', function(){
   if(!restaurant) return;

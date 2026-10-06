@@ -89,7 +89,14 @@ ar: { dir:'rtl', logo:'صحنك',
   err_SLUG_TAKEN:'الرابط المختصر مستخدم من مطعم آخر، اختر رابطًا مختلفًا.', err_RESTAURANT_NOT_FOUND:'لم يتم العثور على المطعم.',
   err_SUBSCRIPTION_REQUIRED:'يجب الاشتراك أولًا.', err_AUTH_REQUIRED:'يجب تسجيل الدخول.', err_INVALID_SESSION:'جلسة غير صالحة، سجّل الدخول من جديد.',
   err_ADMIN_WRONG_PASSWORD:'كلمة مرور المشرف غير صحيحة.', err_ADMIN_NOT_CONFIGURED:'لم يتم إعداد كلمة مرور المشرف بعد.',
-  err_CLAIM_NOT_FOUND:'الطلب غير موجود.', err_MENU_NOT_AVAILABLE:'هذا المنيو غير متاح.'
+  err_CLAIM_NOT_FOUND:'الطلب غير موجود.', err_MENU_NOT_AVAILABLE:'هذا المنيو غير متاح.',
+  err_BAD_COLOR:'لون غير صالح.', err_IMAGE_TOO_LARGE:'حجم الصورة كبير جدًا، اختر صورة أصغر.',
+
+  branding_title:'تخصيص مظهر المنيو', brand_color_label:'لون الهوية (يُستخدم في رمز QR وألوان الصفحة)',
+  cover_image_label:'صورة غلاف المنيو (اختياري)', btn_upload_cover:'رفع صورة', btn_remove_cover:'إزالة الصورة',
+  cover_hint:'ستظهر هذه الصورة كخلفية أعلى صفحة المنيو العامة.',
+  scan_caption:'امسح لرؤية القائمة',
+  btn_download_sticker:'تنزيل ملصق QR للطباعة', sticker_hint:'ملصق جاهز للطباعة ولصقه على طاولات مطعمك.'
 },
 en: { dir:'ltr', logo:'Sahnak',
   nav_login:'Sign in / Create account',
@@ -179,7 +186,14 @@ en: { dir:'ltr', logo:'Sahnak',
   err_SLUG_TAKEN:'This short link is already used by another restaurant, choose a different one.', err_RESTAURANT_NOT_FOUND:'Restaurant not found.',
   err_SUBSCRIPTION_REQUIRED:'You must subscribe first.', err_AUTH_REQUIRED:'You must sign in.', err_INVALID_SESSION:'Invalid session, please sign in again.',
   err_ADMIN_WRONG_PASSWORD:'Incorrect admin password.', err_ADMIN_NOT_CONFIGURED:'Admin password not configured yet.',
-  err_CLAIM_NOT_FOUND:'Request not found.', err_MENU_NOT_AVAILABLE:'This menu is not available.'
+  err_CLAIM_NOT_FOUND:'Request not found.', err_MENU_NOT_AVAILABLE:'This menu is not available.',
+  err_BAD_COLOR:'Invalid color.', err_IMAGE_TOO_LARGE:'Image is too large, pick a smaller one.',
+
+  branding_title:'Customize menu appearance', brand_color_label:'Brand color (used in the QR code and page accents)',
+  cover_image_label:'Menu cover image (optional)', btn_upload_cover:'Upload image', btn_remove_cover:'Remove image',
+  cover_hint:'This image will appear as a banner at the top of your public menu page.',
+  scan_caption:'Scan to view the menu',
+  btn_download_sticker:'Download printable QR sticker', sticker_hint:'A print-ready sticker to stick on your restaurant tables.'
 },
 fr: { dir:'ltr', logo:'Sahnak',
   nav_login:'Connexion / Créer un compte',
@@ -269,7 +283,14 @@ fr: { dir:'ltr', logo:'Sahnak',
   err_SLUG_TAKEN:"Ce lien court est déjà utilisé par un autre restaurant, choisissez-en un autre.", err_RESTAURANT_NOT_FOUND:'Restaurant introuvable.',
   err_SUBSCRIPTION_REQUIRED:"Vous devez d'abord vous abonner.", err_AUTH_REQUIRED:'Vous devez vous connecter.', err_INVALID_SESSION:'Session invalide, reconnectez-vous.',
   err_ADMIN_WRONG_PASSWORD:'Mot de passe administrateur incorrect.', err_ADMIN_NOT_CONFIGURED:'Mot de passe administrateur non configuré.',
-  err_CLAIM_NOT_FOUND:'Demande introuvable.', err_MENU_NOT_AVAILABLE:"Ce menu n'est pas disponible."
+  err_CLAIM_NOT_FOUND:'Demande introuvable.', err_MENU_NOT_AVAILABLE:"Ce menu n'est pas disponible.",
+  err_BAD_COLOR:'Couleur invalide.', err_IMAGE_TOO_LARGE:'Image trop volumineuse, choisissez-en une plus petite.',
+
+  branding_title:'Personnaliser l\'apparence du menu', brand_color_label:'Couleur de marque (utilisée dans le code QR et les accents de la page)',
+  cover_image_label:'Image de couverture du menu (optionnel)', btn_upload_cover:'Téléverser une image', btn_remove_cover:'Supprimer l\'image',
+  cover_hint:'Cette image apparaîtra en bannière en haut de votre page de menu publique.',
+  scan_caption:'Scannez pour voir le menu',
+  btn_download_sticker:'Télécharger l\'autocollant QR imprimable', sticker_hint:'Un autocollant prêt à imprimer pour vos tables.'
 }
 };
 

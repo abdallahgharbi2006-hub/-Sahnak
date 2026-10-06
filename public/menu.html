@@ -36,19 +36,23 @@ function render(){
   const wrap = document.getElementById('wrap');
   if(!menuData) return;
   const m = menuData;
+  const color = m.brandColor || '#e0632a';
+  const coverHtml = m.coverImage
+    ? `<img class="menu-cover-img" src="${m.coverImage}" alt="">`
+    : `<div class="menu-cover" style="background:linear-gradient(135deg,${color},#f2955f);"></div>`;
   wrap.innerHTML = `
-    <div class="menu-cover"></div>
+    ${coverHtml}
     <div class="menu-head">
-      <h2 style="margin:6px 0 2px;">${escapeHtml(m.name||t('lbl_rname'))}</h2>
+      <h2 style="margin:6px 0 2px;color:${color};">${escapeHtml(m.name||t('lbl_rname'))}</h2>
       <p style="color:var(--sub);margin:0;font-size:13px;">${escapeHtml(m.desc||'')}</p>
     </div>
     ${m.sections.map(s=>`
-      <div class="menu-section-title">${escapeHtml(s.title)}</div>
+      <div class="menu-section-title" style="color:${color};">${escapeHtml(s.title)}</div>
       ${s.items.map(it=>`
         <div class="menu-item ${it.avail?'':'unavail'}">
           <div><h4 style="margin:0 0 4px;font-size:15px;">${escapeHtml(it.name)}</h4>
             <p style="margin:0;color:var(--sub);font-size:13px;">${escapeHtml(it.desc)}</p></div>
-          <div class="p">${escapeHtml(it.price)} ${t('currency')}</div>
+          <div class="p" style="color:${color};">${escapeHtml(it.price)} ${t('currency')}</div>
         </div>
       `).join('')}
     `).join('')}
