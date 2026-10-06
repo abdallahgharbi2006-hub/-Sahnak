@@ -8,20 +8,38 @@
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<div class="wrap public-page" id="wrap" style="padding-top:20px;">جارٍ التحميل...</div>
+<header><div class="wrap nav" style="max-width:480px;">
+  <a class="logo" href="/" data-i18n="logo" style="font-size:18px;">صحنك</a>
+  <div class="langbar">
+    <button class="langbtn" data-lang="ar" onclick="Sahnak.setLang('ar')">AR</button>
+    <button class="langbtn" data-lang="en" onclick="Sahnak.setLang('en')">EN</button>
+    <button class="langbtn" data-lang="fr" onclick="Sahnak.setLang('fr')">FR</button>
+  </div>
+</div></header>
+<div class="wrap public-page" id="wrap" style="padding-top:20px;">...</div>
+<script src="/i18n.js"></script>
 <script>
+const t = (k) => Sahnak.t(k);
 function escapeHtml(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+let menuData = null;
+
 async function load(){
   const slug = new URLSearchParams(window.location.search).get('slug');
   const wrap = document.getElementById('wrap');
-  if(!slug){ wrap.innerHTML = '<div class="empty">أضف ?slug=اسم-المطعم إلى الرابط.</div>'; return; }
+  if(!slug){ wrap.innerHTML = '<div class="empty" id="noSlugMsg">'+t('menu_no_slug')+'</div>'; return; }
   const r = await fetch('/api/public/' + encodeURIComponent(slug));
-  if(!r.ok){ wrap.innerHTML = '<div class="empty">هذا المنيو غير متاح حاليًا.</div>'; return; }
-  const m = await r.json();
+  if(!r.ok){ wrap.innerHTML = '<div class="empty" id="notPubMsg">'+t('menu_not_published')+'</div>'; return; }
+  menuData = await r.json();
+  render();
+}
+function render(){
+  const wrap = document.getElementById('wrap');
+  if(!menuData) return;
+  const m = menuData;
   wrap.innerHTML = `
     <div class="menu-cover"></div>
     <div class="menu-head">
-      <h2 style="margin:6px 0 2px;">${escapeHtml(m.name||'اسم المطعم')}</h2>
+      <h2 style="margin:6px 0 2px;">${escapeHtml(m.name||t('lbl_rname'))}</h2>
       <p style="color:var(--sub);margin:0;font-size:13px;">${escapeHtml(m.desc||'')}</p>
     </div>
     ${m.sections.map(s=>`
@@ -30,12 +48,15 @@ async function load(){
         <div class="menu-item ${it.avail?'':'unavail'}">
           <div><h4 style="margin:0 0 4px;font-size:15px;">${escapeHtml(it.name)}</h4>
             <p style="margin:0;color:var(--sub);font-size:13px;">${escapeHtml(it.desc)}</p></div>
-          <div class="p">${escapeHtml(it.price)} د.ت</div>
+          <div class="p">${escapeHtml(it.price)} ${t('currency')}</div>
         </div>
       `).join('')}
     `).join('')}
   `;
 }
+document.addEventListener('sahnak:lang-changed', function(){
+  if(menuData) render();
+});
 load();
 </script>
 </body>

@@ -8,48 +8,59 @@
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<header><div class="wrap nav"><a class="logo" href="/">صحنك</a></div></header>
+<header><div class="wrap nav">
+  <a class="logo" href="/" data-i18n="logo">صحنك</a>
+  <div class="langbar">
+    <button class="langbtn" data-lang="ar" onclick="Sahnak.setLang('ar')">AR</button>
+    <button class="langbtn" data-lang="en" onclick="Sahnak.setLang('en')">EN</button>
+    <button class="langbtn" data-lang="fr" onclick="Sahnak.setLang('fr')">FR</button>
+  </div>
+</div></header>
 <div class="wrap auth-wrap">
-  <h2 style="margin-bottom:4px;">اشترك للوصول إلى لوحة الإدارة</h2>
-  <p style="color:var(--sub);font-size:14px;margin-top:0;">تحويل يدوي بسيط، يُفعَّل حسابك خلال وقت قصير بعد المراجعة</p>
+  <h2 style="margin-bottom:4px;" data-i18n="billing_title">اشترك للوصول إلى لوحة الإدارة</h2>
+  <p style="color:var(--sub);font-size:14px;margin-top:0;" data-i18n="billing_sub">تحويل يدوي بسيط، يُفعَّل حسابك خلال وقت قصير بعد المراجعة</p>
 
   <div id="pendingCard" class="card" style="display:none;">
     <div class="demo-note" style="background:#d9f0e6;color:var(--accent);">
-      ⏳ تم استلام طلبك وهو قيد المراجعة الآن. سيُفعَّل حسابك تلقائيًا فور تأكيد استلام التحويل. يمكنك إغلاق هذه الصفحة والعودة لاحقًا من <a href="/dashboard.html">لوحة الإدارة</a>.
+      ⏳ <span id="pendingMsg" data-i18n="pending_msg">تم استلام طلبك وهو قيد المراجعة الآن.</span>
     </div>
   </div>
 
   <div id="payCard" class="card">
     <div style="text-align:center;">
-      <div style="font-size:34px;font-weight:900;color:var(--brand);" id="amountLabel">جارٍ التحميل...</div>
-      <div style="color:var(--sub);font-size:13px;">اشتراك شهري</div>
+      <div style="font-size:34px;font-weight:900;color:var(--brand);" id="amountLabel">...</div>
+      <div style="color:var(--sub);font-size:13px;" data-i18n="monthly_sub">اشتراك شهري</div>
     </div>
 
     <div class="demo-note" style="margin-top:16px;">
-      <b>خطوات الدفع:</b><br>
-      1) حوّل المبلغ أعلاه عبر <span id="methodLabel">Flouci</span> إلى الرقم/الحساب الموضح أدناه.<br>
-      2) اضغط "لقد قمت بالتحويل" في أسفل الصفحة.<br>
-      3) سيراجع صاحب الموقع التحويل ويُفعّل حسابك يدويًا خلال وقت قصير.
+      <b data-i18n="pay_steps_title">خطوات الدفع:</b><br>
+      1) <span data-i18n="pay_step1">حوّل المبلغ أعلاه عبر</span> <span id="methodLabel">Flouci</span><br>
+      2) <span data-i18n="pay_step2">اضغط "لقد قمت بالتحويل" في أسفل الصفحة.</span><br>
+      3) <span data-i18n="pay_step3">سيراجع صاحب الموقع التحويل ويُفعّل حسابك يدويًا.</span>
     </div>
 
     <div style="margin-top:14px;">
-      <label>رقم Flouci</label>
+      <label data-i18n="phone_label">رقم Flouci</label>
       <div class="linkbox"><span id="phoneVal">—</span></div>
     </div>
     <div id="ribBlock" style="display:none;">
-      <label>أو رقم الحساب البنكي (RIB)</label>
+      <label data-i18n="rib_label">أو رقم الحساب البنكي (RIB)</label>
       <div class="linkbox"><span id="ribVal">—</span></div>
     </div>
     <div id="instructionsBlock" style="display:none;margin-top:10px;color:var(--sub);font-size:13px;"></div>
 
-    <label style="margin-top:16px;">ملاحظة (اختياري — مثلاً اسمك في التحويل)</label>
-    <textarea id="note" rows="2" placeholder="حوّلت من حساب باسم..."></textarea>
+    <label style="margin-top:16px;" data-i18n="note_label">ملاحظة (اختياري)</label>
+    <textarea id="note" rows="2" data-i18n-ph="note_ph" placeholder="حوّلت من حساب باسم..."></textarea>
 
-    <button class="btn" id="claimBtn" style="width:100%;margin-top:14px;" onclick="submitClaim()">لقد قمت بالتحويل</button>
+    <button class="btn" id="claimBtn" style="width:100%;margin-top:14px;" onclick="submitClaim()" data-i18n="btn_claim">لقد قمت بالتحويل</button>
     <div id="err" class="err"></div>
   </div>
 </div>
+<script src="/i18n.js"></script>
 <script>
+const t = (k) => Sahnak.t(k);
+let billingInfo = null;
+
 async function load(){
   const meRes = await fetch('/api/me', { credentials:'include' });
   if(!meRes.ok){ window.location.href = '/auth.html'; return; }
@@ -57,19 +68,8 @@ async function load(){
   if(me.subscribed){ window.location.href = '/dashboard.html'; return; }
 
   const infoRes = await fetch('/api/billing/info');
-  const info = await infoRes.json();
-  document.getElementById('amountLabel').textContent = info.amountText;
-  document.getElementById('methodLabel').textContent = info.label || 'Flouci';
-  document.getElementById('phoneVal').textContent = info.phone || 'لم يضبط صاحب الموقع رقمه بعد';
-  if(info.rib){
-    document.getElementById('ribBlock').style.display = 'block';
-    document.getElementById('ribVal').textContent = info.rib;
-  }
-  if(info.instructions){
-    const b = document.getElementById('instructionsBlock');
-    b.style.display = 'block';
-    b.textContent = info.instructions;
-  }
+  billingInfo = await infoRes.json();
+  renderInfo();
 
   const claimRes = await fetch('/api/billing/my-claim', { credentials:'include' });
   const { claim } = await claimRes.json();
@@ -77,14 +77,29 @@ async function load(){
     document.getElementById('pendingCard').style.display = 'block';
     document.getElementById('payCard').style.display = 'none';
   } else if(claim && claim.status === 'rejected'){
-    document.getElementById('err').textContent = 'تم رفض طلب التحويل السابق، يمكنك إرسال طلب جديد بعد التأكد من التحويل.';
+    document.getElementById('err').textContent = t('rejected_msg');
+  }
+}
+function renderInfo(){
+  if(!billingInfo) return;
+  document.getElementById('amountLabel').textContent = billingInfo.amountText;
+  document.getElementById('methodLabel').textContent = billingInfo.label || 'Flouci';
+  document.getElementById('phoneVal').textContent = billingInfo.phone || '—';
+  if(billingInfo.rib){
+    document.getElementById('ribBlock').style.display = 'block';
+    document.getElementById('ribVal').textContent = billingInfo.rib;
+  }
+  if(billingInfo.instructions){
+    const b = document.getElementById('instructionsBlock');
+    b.style.display = 'block';
+    b.textContent = billingInfo.instructions;
   }
 }
 async function submitClaim(){
   const btn = document.getElementById('claimBtn');
   const err = document.getElementById('err');
   const note = document.getElementById('note').value;
-  btn.disabled = true; btn.textContent = 'جارٍ الإرسال...';
+  btn.disabled = true;
   err.textContent = '';
   try{
     const r = await fetch('/api/billing/manual-claim', {
@@ -92,14 +107,15 @@ async function submitClaim(){
       body: JSON.stringify({ note })
     });
     const data = await r.json();
-    if(!r.ok){ err.textContent = data.error || 'حدث خطأ'; btn.disabled=false; btn.textContent='لقد قمت بالتحويل'; return; }
+    if(!r.ok){ err.textContent = Sahnak.err(data); btn.disabled=false; return; }
     document.getElementById('pendingCard').style.display = 'block';
     document.getElementById('payCard').style.display = 'none';
   }catch(e){
-    err.textContent = 'تعذّر الاتصال بالخادم.';
-    btn.disabled=false; btn.textContent='لقد قمت بالتحويل';
+    err.textContent = t('err_server');
+    btn.disabled=false;
   }
 }
+document.addEventListener('sahnak:lang-changed', renderInfo);
 load();
 </script>
 </body>

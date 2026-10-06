@@ -9,15 +9,86 @@
 </head>
 <body>
 <header><div class="wrap nav">
-  <a class="logo" href="/">صحنك</a>
-  <a class="btn small" href="/auth.html">تسجيل الدخول / إنشاء حساب</a>
+  <a class="logo" href="/" data-i18n="logo">صحنك</a>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="langbar">
+      <button class="langbtn" data-lang="ar" onclick="Sahnak.setLang('ar')">AR</button>
+      <button class="langbtn" data-lang="en" onclick="Sahnak.setLang('en')">EN</button>
+      <button class="langbtn" data-lang="fr" onclick="Sahnak.setLang('fr')">FR</button>
+    </div>
+    <a class="btn small" href="/auth.html" data-i18n="nav_login">تسجيل الدخول / إنشاء حساب</a>
+  </div>
 </div></header>
+
 <div class="wrap">
   <div class="hero">
-    <h1>حوّل قائمة مطعمك إلى منيو رقمية بلمسات بسيطة</h1>
-    <p>أنشئ حسابًا خاصًا بك، ابنِ منيو مطعمك، وشارك رابطًا ورمز QR يفتحه الزبون من هاتفه مباشرة.</p>
-    <a class="btn" href="/auth.html">ابدأ الآن</a>
+    <h1 data-i18n="home_title">حوّل قائمة مطعمك إلى منيو رقمية بلمسات بسيطة</h1>
+    <p data-i18n="home_sub">أنشئ حسابًا خاصًا بك، ابنِ منيو مطعمك، وشارك رابطًا ورمز QR يفتحه الزبون من هاتفه مباشرة.</p>
+    <a class="btn" href="/auth.html" data-i18n="home_cta">ابدأ الآن مجانًا</a>
+  </div>
+
+  <div class="section">
+    <div class="stats">
+      <div class="stat"><b data-i18n="stat1">0 د.ت</b><span data-i18n="stat1_l">تكلفة الإعداد الأول</span></div>
+      <div class="stat"><b data-i18n="stat2">دقائق</b><span data-i18n="stat2_l">لإنشاء منيو كامل</span></div>
+      <div class="stat"><b data-i18n="stat3">24/7</b><span data-i18n="stat3_l">منيو متاح دائمًا للزبون</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title" data-i18n="why_title">لماذا يختار أصحاب المطاعم صحنك؟</h2>
+    <p class="section-sub" data-i18n="why_sub">كل تحديث تحتاجه لقائمتك يستغرق ثوانٍ.</p>
+    <div class="grid3">
+      <div class="feat">
+        <div class="icon">⚡</div>
+        <b data-i18n="feat1t">سرعة التحديث</b>
+        <span data-i18n="feat1s">غيّر السعر أو أخفِ صنفًا في ثوانٍ.</span>
+      </div>
+      <div class="feat">
+        <div class="icon">🔗</div>
+        <b data-i18n="feat2t">رابط ورمز QR خاص بك</b>
+        <span data-i18n="feat2s">رابط عام باسم مطعمك مع رمز QR.</span>
+      </div>
+      <div class="feat">
+        <div class="icon">📱</div>
+        <b data-i18n="feat3t">تجربة أنيقة على الهاتف</b>
+        <span data-i18n="feat3s">صفحة منيو نظيفة ومتجاوبة.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title" data-i18n="steps_title">تبدأ في 3 خطوات فقط</h2>
+    <p class="section-sub" data-i18n="steps_sub">من التسجيل إلى منيو منشور جاهز للمسح.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <b data-i18n="step1t">أنشئ حسابك</b>
+        <span data-i18n="step1s">بريد إلكتروني أو رقم هاتف، وكلمة مرور.</span>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <b data-i18n="step2t">ابنِ منيو مطعمك</b>
+        <span data-i18n="step2s">أضف أقسامك وأصنافك وأسعارك.</span>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <b data-i18n="step3t">انشر وشارك الرابط</b>
+        <span data-i18n="step3s">احصل على رابط ورمز QR فوريين.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="cta-banner">
+      <h2 data-i18n="cta_title">قائمتك الورقية تنتظر التحديث منذ متى؟</h2>
+      <p data-i18n="cta_sub">انضم الآن، وحوّل مطعمك إلى تجربة رقمية عصرية.</p>
+      <a class="btn" href="/auth.html" data-i18n="cta_btn">أنشئ منيو مطعمك الآن</a>
+    </div>
   </div>
 </div>
+
+<footer class="site-footer" data-i18n="footer">صحنك — منيو رقمية للمطاعم والمقاهي في تونس</footer>
+<script src="/i18n.js"></script>
 </body>
 </html>

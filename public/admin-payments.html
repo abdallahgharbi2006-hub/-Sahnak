@@ -15,33 +15,43 @@
 </style>
 </head>
 <body>
-<header><div class="wrap nav"><a class="logo" href="/">صحنك</a></div></header>
+<header><div class="wrap nav">
+  <a class="logo" href="/" data-i18n="logo">صحنك</a>
+  <div class="langbar">
+    <button class="langbtn" data-lang="ar" onclick="Sahnak.setLang('ar')">AR</button>
+    <button class="langbtn" data-lang="en" onclick="Sahnak.setLang('en')">EN</button>
+    <button class="langbtn" data-lang="fr" onclick="Sahnak.setLang('fr')">FR</button>
+  </div>
+</div></header>
 <div class="wrap" style="padding:24px 0 60px;max-width:680px;">
 
   <div class="card" id="loginCard">
-    <h3>دخول المشرف</h3>
-    <label>كلمة مرور المشرف</label>
+    <h3 data-i18n="admin_login_title">دخول المشرف</h3>
+    <label data-i18n="admin_pw_label">كلمة مرور المشرف</label>
     <input id="pw" type="password">
-    <button class="btn" style="width:100%;margin-top:14px;" onclick="adminLogin()">دخول</button>
+    <button class="btn" style="width:100%;margin-top:14px;" onclick="adminLogin()" data-i18n="btn_admin_login">دخول</button>
     <div id="loginErr" class="err"></div>
   </div>
 
   <div id="panel" style="display:none;">
     <div class="userbar">
-      <span>لوحة مراجعة طلبات الاشتراك</span>
-      <button class="btn ghost small" onclick="adminLogout()">تسجيل الخروج</button>
+      <span data-i18n="admin_panel_title">لوحة مراجعة طلبات الاشتراك</span>
+      <button class="btn ghost small" onclick="adminLogout()" data-i18n="btn_logout">تسجيل الخروج</button>
     </div>
     <div class="card">
-      <h3 style="margin:0 0 10px;">الطلبات المعلّقة</h3>
+      <h3 style="margin:0 0 10px;" data-i18n="pending_requests">الطلبات المعلّقة</h3>
       <div id="pendingList"></div>
     </div>
     <div class="card">
-      <h3 style="margin:0 0 10px;">سجل الطلبات (الكل)</h3>
+      <h3 style="margin:0 0 10px;" data-i18n="all_requests">سجل الطلبات (الكل)</h3>
       <div id="allList"></div>
     </div>
   </div>
 </div>
+<script src="/i18n.js"></script>
 <script>
+const t = (k) => Sahnak.t(k);
+let lastClaims = [];
 function escapeHtml(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
 async function adminLogin(){
@@ -53,10 +63,10 @@ async function adminLogin(){
       body: JSON.stringify({ password })
     });
     const data = await r.json();
-    if(!r.ok){ err.textContent = data.error || 'خطأ'; return; }
+    if(!r.ok){ err.textContent = Sahnak.err(data); return; }
     err.textContent = '';
     showPanel();
-  }catch(e){ err.textContent = 'تعذّر الاتصال بالخادم.'; }
+  }catch(e){ err.textContent = t('err_server'); }
 }
 async function adminLogout(){
   await fetch('/api/admin/logout', { method:'POST', credentials:'include' });
@@ -72,29 +82,33 @@ async function refresh(){
   const r = await fetch('/api/admin/claims', { credentials:'include' });
   if(!r.ok){ document.getElementById('panel').style.display='none'; document.getElementById('loginCard').style.display='block'; return; }
   const { claims } = await r.json();
-  const pending = claims.filter(c => c.status === 'pending');
+  lastClaims = claims;
+  renderLists();
+}
+function renderLists(){
+  const pending = lastClaims.filter(c => c.status === 'pending');
   document.getElementById('pendingList').innerHTML = pending.length ? pending.map(rowHtml).join('') :
-    '<div class="empty">لا توجد طلبات معلّقة حاليًا.</div>';
-  document.getElementById('allList').innerHTML = claims.length ? claims.map(rowHtml).join('') :
-    '<div class="empty">لا توجد طلبات بعد.</div>';
+    '<div class="empty">'+t('no_pending')+'</div>';
+  document.getElementById('allList').innerHTML = lastClaims.length ? lastClaims.map(rowHtml).join('') :
+    '<div class="empty">'+t('no_requests')+'</div>';
 }
 function statusLabel(s){
-  if(s==='approved') return '<span style="color:var(--accent);font-weight:700;">مقبول ✅</span>';
-  if(s==='rejected') return '<span style="color:#c93b3b;font-weight:700;">مرفوض ✕</span>';
-  return '<span style="color:var(--draft);font-weight:700;">قيد المراجعة</span>';
+  if(s==='approved') return '<span style="color:var(--accent);font-weight:700;">'+t('status_approved')+'</span>';
+  if(s==='rejected') return '<span style="color:#c93b3b;font-weight:700;">'+t('status_rejected')+'</span>';
+  return '<span style="color:var(--draft);font-weight:700;">'+t('status_pending')+'</span>';
 }
 function rowHtml(c){
-  const date = new Date(c.createdAt).toLocaleString('ar-TN');
+  const date = new Date(c.createdAt).toLocaleString();
   const actions = c.status === 'pending' ? `
     <div class="claim-actions">
-      <button class="btn small" onclick="act('${c.id}','approve')">قبول</button>
-      <button class="btn ghost small" onclick="act('${c.id}','reject')">رفض</button>
+      <button class="btn small" onclick="act('${c.id}','approve')">${t('btn_approve')}</button>
+      <button class="btn ghost small" onclick="act('${c.id}','reject')">${t('btn_reject')}</button>
     </div>` : '';
   return `<div class="claim-row">
     <div class="claim-info">
       <b>${escapeHtml(c.identifier)}</b>
       <span>${date}</span>
-      ${c.note ? `<span>ملاحظة: ${escapeHtml(c.note)}</span>` : ''}
+      ${c.note ? `<span>${t('note_prefix')} ${escapeHtml(c.note)}</span>` : ''}
       <span>${statusLabel(c.status)}</span>
     </div>
     ${actions}
@@ -104,7 +118,7 @@ async function act(id, action){
   await fetch(`/api/admin/claims/${id}/${action}`, { method:'POST', credentials:'include' });
   refresh();
 }
-// إن كانت الجلسة صالحة بالفعل (زيارة سابقة) انتقل للوحة مباشرة
+document.addEventListener('sahnak:lang-changed', function(){ if(lastClaims.length || document.getElementById('panel').style.display==='block') renderLists(); });
 fetch('/api/admin/claims', { credentials:'include' }).then(r => { if(r.ok) showPanel(); });
 </script>
 </body>

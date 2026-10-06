@@ -10,34 +10,41 @@
 </head>
 <body>
 <header><div class="wrap nav">
-  <a class="logo" href="/">صحنك</a>
-  <a class="btn small ghost" href="/menu.html" target="_blank">معاينة أي منيو منشور</a>
+  <a class="logo" href="/" data-i18n="logo">صحنك</a>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="langbar">
+      <button class="langbtn" data-lang="ar" onclick="Sahnak.setLang('ar')">AR</button>
+      <button class="langbtn" data-lang="en" onclick="Sahnak.setLang('en')">EN</button>
+      <button class="langbtn" data-lang="fr" onclick="Sahnak.setLang('fr')">FR</button>
+    </div>
+    <a class="btn small ghost" href="/menu.html" target="_blank" data-i18n="preview_any_menu">معاينة أي منيو منشور</a>
+  </div>
 </div></header>
 
 <div class="wrap" style="padding:24px 0 60px;">
-  <div class="userbar" id="userbar">جارٍ التحقق من جلستك...</div>
+  <div class="userbar" id="userbar">...</div>
 
   <div class="card">
-    <h3>بيانات المطعم (حسابك الخاص)</h3>
+    <h3 data-i18n="restaurant_info">بيانات المطعم (حسابك الخاص)</h3>
     <div class="row">
-      <div><label>اسم المطعم</label><input id="rname" placeholder="مقهى الدار"></div>
-      <div><label>الرابط المختصر</label><input id="rslug" placeholder="dar-cafe"></div>
+      <div><label data-i18n="lbl_rname">اسم المطعم</label><input id="rname" data-i18n-ph="ph_rname" placeholder="مقهى الدار"></div>
+      <div><label data-i18n="lbl_rslug">الرابط المختصر</label><input id="rslug" placeholder="dar-cafe"></div>
     </div>
-    <label>وصف مختصر (اختياري)</label>
-    <textarea id="rdesc" rows="2" placeholder="مقهى ومطعم يقدم المشروبات والفطور والحلويات"></textarea>
+    <label data-i18n="lbl_rdesc">وصف مختصر (اختياري)</label>
+    <textarea id="rdesc" rows="2" data-i18n-ph="ph_rdesc" placeholder="مقهى ومطعم يقدم المشروبات والفطور والحلويات"></textarea>
   </div>
 
   <div class="card">
     <div class="section-head">
-      <h3 style="margin:0">أقسام المنيو والأصناف (الأسعار بالدينار التونسي)</h3>
-      <button class="btn small" onclick="addSection()">+ إضافة قسم</button>
+      <h3 style="margin:0" data-i18n="sections_title">أقسام المنيو والأصناف (الأسعار بالدينار التونسي)</h3>
+      <button class="btn small" onclick="addSection()" data-i18n="btn_add_section">+ إضافة قسم</button>
     </div>
     <div id="sections"></div>
   </div>
 
   <div class="card">
     <div class="section-head">
-      <div>الحالة: <span class="badge" id="statusBadge"></span></div>
+      <div><span data-i18n="status_label">الحالة:</span> <span class="badge" id="statusBadge"></span></div>
       <button class="btn" id="publishBtn" onclick="togglePublish()"></button>
     </div>
     <div id="linkArea" style="margin-top:14px;"></div>
@@ -45,17 +52,17 @@
   <div id="saveMsg" class="ok"></div>
 </div>
 
+<script src="/i18n.js"></script>
 <script>
 let restaurant = null;
+const t = (k) => Sahnak.t(k);
 
 async function boot(){
   const meRes = await fetch('/api/me', { credentials:'include' });
   if(!meRes.ok){ window.location.href = '/auth.html'; return; }
   const me = await meRes.json();
   if(!me.subscribed){ window.location.href = '/billing.html'; return; }
-  document.getElementById('userbar').innerHTML =
-    `<span>مسجّل الدخول بحساب: <b style="color:var(--ink)">${escapeHtml(me.identifier)}</b> · <span style="color:var(--accent);font-weight:700;">مشترك ✅</span></span>
-     <button class="btn ghost small" onclick="logout()">تسجيل الخروج</button>`;
+  renderUserbar(me.identifier);
 
   const rRes = await fetch('/api/restaurant', { credentials:'include' });
   restaurant = await rRes.json();
@@ -63,6 +70,11 @@ async function boot(){
   document.getElementById('rslug').value = restaurant.slug || '';
   document.getElementById('rdesc').value = restaurant.desc || '';
   renderSections(); renderStatus(); renderLink();
+}
+function renderUserbar(identifier){
+  document.getElementById('userbar').innerHTML =
+    `<span>${t('logged_as')} <b style="color:var(--ink)">${escapeHtml(identifier)}</b> · <span style="color:var(--accent);font-weight:700;">${t('sub_badge')}</span></span>
+     <button class="btn ghost small" onclick="logout()">${t('btn_logout')}</button>`;
 }
 async function logout(){
   await fetch('/api/logout', { method:'POST', credentials:'include' });
@@ -83,9 +95,9 @@ async function saveRestaurant(extra){
   });
   const data = await r.json();
   const msg = document.getElementById('saveMsg');
-  if(!r.ok){ msg.className='err'; msg.textContent = data.error; return false; }
+  if(!r.ok){ msg.className='err'; msg.textContent = Sahnak.err(data); return false; }
   restaurant = data;
-  msg.className='ok'; msg.textContent='تم الحفظ ✓';
+  msg.className='ok'; msg.textContent=t('save_ok');
   setTimeout(()=> msg.textContent='', 1500);
   return true;
 }
@@ -93,9 +105,9 @@ async function saveRestaurant(extra){
   document.getElementById(id).addEventListener('change', ()=> saveRestaurant());
 });
 
-function addSection(){ restaurant.sections.push({id:uid(), title:'قسم جديد', items:[]}); saveRestaurant().then(renderSections); }
+function addSection(){ restaurant.sections.push({id:uid(), title: t('new_section'), items:[]}); saveRestaurant().then(renderSections); }
 function removeSection(id){ restaurant.sections = restaurant.sections.filter(s=>s.id!==id); saveRestaurant().then(renderSections); }
-function addItem(sid){ restaurant.sections.find(s=>s.id===sid).items.push({id:uid(), name:'صنف جديد', price:'0', desc:'', avail:true}); saveRestaurant().then(renderSections); }
+function addItem(sid){ restaurant.sections.find(s=>s.id===sid).items.push({id:uid(), name:'', price:'0', desc:'', avail:true}); saveRestaurant().then(renderSections); }
 function removeItem(sid,iid){ const s=restaurant.sections.find(s=>s.id===sid); s.items=s.items.filter(i=>i.id!==iid); saveRestaurant().then(renderSections); }
 function updateSectionTitle(sid,val){ restaurant.sections.find(s=>s.id===sid).title=val; saveRestaurant(); }
 function updateItem(sid,iid,field,val){ restaurant.sections.find(s=>s.id===sid).items.find(i=>i.id===iid)[field]=val; saveRestaurant(); }
@@ -103,51 +115,56 @@ function toggleAvail(sid,iid){ const it=restaurant.sections.find(s=>s.id===sid).
 
 function renderSections(){
   const wrap = document.getElementById('sections'); wrap.innerHTML='';
-  if(restaurant.sections.length===0){ wrap.innerHTML='<div class="empty">لا توجد أقسام بعد.</div>'; }
+  if(restaurant.sections.length===0){ wrap.innerHTML='<div class="empty">'+t('empty_sections')+'</div>'; }
   restaurant.sections.forEach(s=>{
     const div = document.createElement('div'); div.className='section-block';
     div.innerHTML = `
       <div class="section-head">
         <input value="${escapeAttr(s.title)}" onchange="updateSectionTitle(${s.id}, this.value)">
         <div>
-          <button class="iconbtn" onclick="addItem(${s.id})">➕ صنف</button>
+          <button class="iconbtn" onclick="addItem(${s.id})">${t('btn_add_item')}</button>
           <button class="iconbtn" onclick="removeSection(${s.id})">🗑</button>
         </div>
       </div>
       ${s.items.map(it=>`
         <div class="item">
           <div><input value="${escapeAttr(it.name)}" onchange="updateItem(${s.id},${it.id},'name',this.value)"></div>
-          <div class="price"><input value="${escapeAttr(it.price)}" placeholder="د.ت" onchange="updateItem(${s.id},${it.id},'price',this.value)"></div>
-          <div><input placeholder="وصف قصير" value="${escapeAttr(it.desc)}" onchange="updateItem(${s.id},${it.id},'desc',this.value)"></div>
-          <span class="pill ${it.avail?'on':'off'}" onclick="toggleAvail(${s.id},${it.id})">${it.avail?'متاح':'مخفي'}</span>
+          <div class="price"><input value="${escapeAttr(it.price)}" placeholder="${t('currency')}" onchange="updateItem(${s.id},${it.id},'price',this.value)"></div>
+          <div><input placeholder="${t('ph_item_desc')}" value="${escapeAttr(it.desc)}" onchange="updateItem(${s.id},${it.id},'desc',this.value)"></div>
+          <span class="pill ${it.avail?'on':'off'}" onclick="toggleAvail(${s.id},${it.id})">${it.avail?t('pill_avail'):t('pill_hidden')}</span>
           <button class="iconbtn" onclick="removeItem(${s.id},${it.id})">🗑</button>
         </div>
-      `).join('') || '<div class="empty">لا توجد أصناف.</div>'}
+      `).join('') || '<div class="empty">'+t('empty_items')+'</div>'}
     `;
     wrap.appendChild(div);
   });
 }
 async function togglePublish(){
-  if(!restaurant.slug){ alert('أدخل الرابط المختصر أولًا.'); return; }
+  if(!restaurant.slug){ alert(t('alert_need_slug')); return; }
   const ok = await saveRestaurant({ published: !restaurant.published });
   if(ok){ renderStatus(); renderLink(); }
 }
 function renderStatus(){
   const b = document.getElementById('statusBadge'); const btn = document.getElementById('publishBtn');
-  if(restaurant.published){ b.textContent='منشور'; b.className='badge pub'; btn.textContent='إلغاء النشر'; }
-  else{ b.textContent='مسودة'; b.className='badge draft'; btn.textContent='نشر المنيو'; }
+  if(restaurant.published){ b.textContent=t('status_pub'); b.className='badge pub'; btn.textContent=t('btn_unpublish'); }
+  else{ b.textContent=t('status_draft'); b.className='badge draft'; btn.textContent=t('btn_publish'); }
 }
 function renderLink(){
   const area = document.getElementById('linkArea');
   if(!restaurant.published || !restaurant.slug){ area.innerHTML=''; return; }
   const link = window.location.origin + '/menu.html?slug=' + encodeURIComponent(restaurant.slug);
-  area.innerHTML = `<label>الرابط العام</label><div class="linkbox"><span>${escapeHtml(link)}</span></div>
+  area.innerHTML = `<label>${t('public_link')}</label><div class="linkbox"><span>${escapeHtml(link)}</span></div>
     <div class="qrwrap"><div id="qrcode"></div>
-      <div style="margin-top:8px;"><a class="btn ghost small" href="${link}" target="_blank">فتح معاينة المنيو</a></div>
+      <div style="margin-top:8px;"><a class="btn ghost small" href="${link}" target="_blank">${t('btn_preview')}</a></div>
     </div>`;
   document.getElementById('qrcode').innerHTML='';
   new QRCode(document.getElementById('qrcode'), { text: link, width:140, height:140 });
 }
+document.addEventListener('sahnak:lang-changed', function(){
+  if(!restaurant) return;
+  renderSections(); renderStatus(); renderLink();
+  fetch('/api/me', { credentials:'include' }).then(r=>r.json()).then(me=> renderUserbar(me.identifier));
+});
 boot();
 </script>
 </body>
