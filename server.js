@@ -58,8 +58,15 @@ function adminRequired(req, res, next) {
 }
 
 // ---------------- AUTH: SIGNUP (email or phone) ----------------
+// التسجيل برقم الهاتف معطّل افتراضيًا لأنه يحتاج مزوّد SMS حقيقيًا (وإلا لن يصل الرمز للمستخدم)
+const PHONE_SIGNUP_ENABLED = process.env.ENABLE_PHONE_SIGNUP === 'true';
+app.get('/api/config', (req, res) => res.json({ phoneSignup: PHONE_SIGNUP_ENABLED }));
+
 app.post('/api/signup/request-code', async (req, res) => {
   const { identifier, password, confirmPassword, method } = req.body || {};
+  if (method === 'phone' && !PHONE_SIGNUP_ENABLED) {
+    return res.status(403).json({ error: 'التسجيل برقم الهاتف غير متاح حاليًا، استخدم بريدك الإلكتروني', code: 'PHONE_SIGNUP_DISABLED' });
+  }
   if (!identifier || !password) return res.status(400).json({ error: 'البيانات ناقصة', code: 'MISSING_FIELDS' });
   if (method === 'email' && !isEmail(identifier)) return res.status(400).json({ error: 'بريد إلكتروني غير صحيح', code: 'BAD_EMAIL' });
   if (method === 'phone' && !isPhone(identifier)) return res.status(400).json({ error: 'رقم هاتف غير صحيح', code: 'BAD_PHONE' });
