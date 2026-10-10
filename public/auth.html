@@ -27,7 +27,8 @@
 
   <!-- SIGNUP STEP 1 -->
   <div class="card" id="step1">
-    <div class="tabs" style="margin-bottom:12px;">
+    <div class="hint" id="phoneOffHint" style="display:none;margin:0 0 12px;" data-i18n="phone_signup_off"></div>
+    <div class="tabs" id="signupMethodTabs" style="margin-bottom:12px;">
       <div class="tab active" id="mEmail" onclick="switchMethod('email')" data-i18n="m_email">بريد إلكتروني</div>
       <div class="tab" id="mPhone" onclick="switchMethod('phone')" data-i18n="m_phone">رقم الهاتف</div>
     </div>
@@ -211,6 +212,15 @@ async function doLogin(){
     window.location.href = data.redirect || '/dashboard.html';
   }catch(e){ err.textContent = t('err_server'); }
 }
+// إخفاء خيار التسجيل بالهاتف إذا عطّله الخادم (يبقى متاحًا في تبويب تسجيل الدخول للحسابات القديمة)
+fetch('/api/config').then(r => r.json()).then(cfg => {
+  if(!cfg.phoneSignup){
+    document.getElementById('signupMethodTabs').style.display = 'none';
+    document.getElementById('phoneOffHint').style.display = 'block';
+    switchMethod('email');
+  }
+}).catch(() => {});
+
 document.addEventListener('sahnak:lang-changed', function(){
   document.getElementById('idLabel').textContent = t(method==='email' ? 'lbl_email':'lbl_phone');
   document.getElementById('loginIdLabel').textContent = t(loginMethod==='email' ? 'lbl_email':'lbl_phone');
