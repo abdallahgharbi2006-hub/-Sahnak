@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { readDB, writeDB } = require('./db');
+const { initDB, readDB, writeDB, flush } = require('./db');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('./mailer');
 const { sendVerificationSms } = require('./sms');
 
@@ -332,4 +332,9 @@ app.get('/api/public/:slug', (req, res) => {
   res.json({ name: r.name, desc: r.desc, sections: r.sections, brandColor: r.brandColor || null, coverImage: r.coverImage || null });
 });
 
-app.listen(PORT, () => console.log(`✅ صحنك يعمل على http://localhost:${PORT}`));
+initDB()
+  .then(() => app.listen(PORT, () => console.log(`✅ صحنك يعمل على http://localhost:${PORT}`)))
+  .catch(e => { console.error('❌ فشل تهيئة قاعدة البيانات:', e.message); process.exit(1); });
+
+// عند إيقاف الخدمة (إعادة نشر/خمول) ننتظر انتهاء آخر حفظ حتى لا نفقد بيانات
+process.on('SIGTERM', async () => { await flush(); process.exit(0); });
