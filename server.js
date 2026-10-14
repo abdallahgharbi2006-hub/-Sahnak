@@ -15,7 +15,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 const ADMIN_JWT_SECRET = JWT_SECRET + '_admin_panel';
 const CODE_TTL_MS = 10 * 60 * 1000;
 const APP_URL = process.env.APP_URL || `http://localhost:${PORT}`;
-const SUBSCRIPTION_PRICE_MILLIMES = Number(process.env.SUBSCRIPTION_PRICE_MILLIMES || 29000); // 29.000 د.ت افتراضيًا
+const SUBSCRIPTION_PRICE_MILLIMES = Number(process.env.SUBSCRIPTION_PRICE_MILLIMES || 29000); // 29.000 TND افتراضيًا (يُتجاهل إن ضُبط SUBSCRIPTION_PRICE_TEXT)
 
 app.use(express.json({ limit: '4mb' })); // رُفع الحد للسماح برفع صورة غلاف المطعم (base64)
 app.use(cookieParser());
@@ -60,7 +60,10 @@ function adminRequired(req, res, next) {
 // ---------------- AUTH: SIGNUP (email or phone) ----------------
 // التسجيل برقم الهاتف معطّل افتراضيًا لأنه يحتاج مزوّد SMS حقيقيًا (وإلا لن يصل الرمز للمستخدم)
 const PHONE_SIGNUP_ENABLED = process.env.ENABLE_PHONE_SIGNUP === 'true';
-app.get('/api/config', (req, res) => res.json({ phoneSignup: PHONE_SIGNUP_ENABLED }));
+app.get('/api/config', (req, res) => res.json({
+  phoneSignup: PHONE_SIGNUP_ENABLED,
+  contactEmail: process.env.CONTACT_EMAIL || process.env.MAIL_FROM_EMAIL || ''
+}));
 
 app.post('/api/signup/request-code', async (req, res) => {
   const { identifier, password, confirmPassword, method } = req.body || {};
@@ -112,7 +115,7 @@ app.post('/api/signup/verify', (req, res) => {
   };
   db.users.push(user);
   db.pendingCodes = db.pendingCodes.filter(p => p.identifier !== identifier);
-  db.restaurants.push({ id: 'r_' + Date.now(), ownerId: user.id, name: '', slug: '', desc: '', published: false, sections: [] });
+  db.restaurants.push({ id: 'r_' + Date.now(), ownerId: user.id, name: '', slug: '', desc: '', published: false, currency: '', sections: [] });
   writeDB(db);
 
   res.cookie('sahnak_token', signToken(user.id), { httpOnly: true, sameSite: 'lax', maxAge: 30 * 24 * 3600 * 1000 });
@@ -139,27 +142,14 @@ app.post('/api/logout', (req, res) => {
 
 // ---------------- PASSWORD RESET (via email) ----------------
 app.post('/api/password/forgot', async (req, res) => {
-  const { identifier, recoveryEmail } = req.body || {};
-  if (!identifier) return res.status(400).json({ error: 'أدخل بريدك الإلكتروني أو رقم هاتفك', code: 'MISSING_IDENTIFIER' });
+  const email = String((req.body || {}).identifier || '').trim();
+  if (!email) return res.status(400).json({ error: 'أدخل بريدك الإلكتروني', code: 'MISSING_IDENTIFIER' });
+  // استعادة كلمة المرور عبر البريد الإلكتروني فقط (لا نقبل رقم هاتف، ولا نسمح بإضافة بريد استرداد جديد
+  // لحساب قائم، لأن ذلك كان يتيح لأي شخص يعرف رقمًا مسجّلًا أن يستولي على حسابه)
+  if (!isEmail(email)) return res.status(400).json({ error: 'أدخل بريدًا إلكترونيًا صحيحًا', code: 'BAD_EMAIL' });
   const db = readDB();
-  const user = db.users.find(u => u.identifier === identifier);
-  if (!user) return res.status(404).json({ error: 'لا يوجد حساب مسجّل بهذه البيانات', code: 'ACCOUNT_NOT_FOUND' });
-
-  let targetEmail = null;
-  if (user.method === 'email') {
-    targetEmail = user.identifier;
-  } else {
-    // حساب مسجّل برقم هاتف: نطلب بريدًا إلكترونيًا لإرسال الرابط إليه، ونحفظه لاستخدامه في المرات القادمة
-    if (recoveryEmail) {
-      if (!isEmail(recoveryEmail)) return res.status(400).json({ error: 'أدخل بريدًا إلكترونيًا صحيحًا', code: 'BAD_EMAIL' });
-      user.recoveryEmail = recoveryEmail;
-      targetEmail = recoveryEmail;
-    } else if (user.recoveryEmail) {
-      targetEmail = user.recoveryEmail;
-    } else {
-      return res.json({ needsEmail: true, message: 'هذا الحساب مسجّل برقم هاتف، أدخل بريدًا إلكترونيًا لإرسال رابط الاستعادة إليه' });
-    }
-  }
+  const user = db.users.find(u => u.method === 'email' && String(u.identifier).toLowerCase() === email.toLowerCase());
+  if (!user) return res.status(404).json({ error: 'لا يوجد حساب مسجّل بهذا البريد', code: 'ACCOUNT_NOT_FOUND' });
 
   const token = crypto.randomBytes(24).toString('hex');
   db.passwordResets = (db.passwordResets || []).filter(r => r.userId !== user.id); // إلغاء أي روابط سابقة
@@ -168,8 +158,8 @@ app.post('/api/password/forgot', async (req, res) => {
 
   const link = `${APP_URL}/reset-password.html?token=${token}`;
   try {
-    const result = await sendPasswordResetEmail(targetEmail, link);
-    res.json({ ok: true, simulated: result.simulated, sentTo: targetEmail });
+    const result = await sendPasswordResetEmail(user.identifier, link);
+    res.json({ ok: true, simulated: result.simulated, sentTo: user.identifier });
   } catch (e) {
     console.error('فشل إرسال رابط استعادة كلمة المرور:', e.message);
     res.status(500).json({ error: 'تعذّر إرسال رابط الاستعادة الآن، حاول لاحقًا', code: 'SEND_RESET_FAILED' });
@@ -207,7 +197,7 @@ app.get('/api/me', authRequired, (req, res) => {
 // ---------------- BILLING (manual transfer, confirmed by the site owner) ----------------
 app.get('/api/billing/info', (req, res) => {
   res.json({
-    amountText: `${(SUBSCRIPTION_PRICE_MILLIMES / 1000).toFixed(3)} د.ت`,
+    amountText: process.env.SUBSCRIPTION_PRICE_TEXT || `${(SUBSCRIPTION_PRICE_MILLIMES / 1000).toFixed(3)} TND`,
     phone: process.env.PAYMENT_PHONE || '',
     rib: process.env.PAYMENT_RIB || '',
     label: process.env.PAYMENT_METHOD_LABEL || 'Flouci',
@@ -294,7 +284,7 @@ app.get('/api/restaurant', authRequired, subscriptionRequired, (req, res) => {
   const db = readDB();
   let r = db.restaurants.find(r => r.ownerId === req.userId);
   if (!r) {
-    r = { id: 'r_' + Date.now(), ownerId: req.userId, name: '', slug: '', desc: '', published: false, sections: [] };
+    r = { id: 'r_' + Date.now(), ownerId: req.userId, name: '', slug: '', desc: '', published: false, currency: '', sections: [] };
     db.restaurants.push(r);
     writeDB(db);
   }
@@ -302,7 +292,7 @@ app.get('/api/restaurant', authRequired, subscriptionRequired, (req, res) => {
 });
 
 app.put('/api/restaurant', authRequired, subscriptionRequired, (req, res) => {
-  const { name, slug, desc, sections, published, brandColor, coverImage } = req.body || {};
+  const { name, slug, desc, sections, published, brandColor, coverImage, currency } = req.body || {};
   const db = readDB();
   const r = db.restaurants.find(r => r.ownerId === req.userId);
   if (!r) return res.status(404).json({ error: 'لم يتم العثور على المطعم', code: 'RESTAURANT_NOT_FOUND' });
@@ -310,6 +300,14 @@ app.put('/api/restaurant', authRequired, subscriptionRequired, (req, res) => {
   if (published && slug) {
     const clash = db.restaurants.find(x => x.slug === slug && x.ownerId !== req.userId && x.published);
     if (clash) return res.status(400).json({ error: 'الرابط المختصر مستخدم من مطعم آخر، اختر رابطًا مختلفًا', code: 'SLUG_TAKEN' });
+  }
+  // عملة الأسعار: رمز ISO من 3 أحرف كبيرة (USD, EUR, TRY...)، ويُسمح بقيمة فارغة ما دام المنيو غير منشور
+  if (currency !== undefined && currency !== '' && !/^[A-Z]{3}$/.test(currency)) {
+    return res.status(400).json({ error: 'رمز العملة غير صالح', code: 'BAD_CURRENCY' });
+  }
+  const finalCurrency = currency !== undefined ? currency : r.currency;
+  if (published === true && !finalCurrency) {
+    return res.status(400).json({ error: 'اختر عملة الأسعار قبل نشر المنيو', code: 'CURRENCY_REQUIRED' });
   }
   // تحقق بسيط من صيغة لون الهوية (hex) حتى لا تُخزَّن قيمة غير صالحة
   if (brandColor !== undefined && !/^#[0-9a-fA-F]{6}$/.test(brandColor)) {
@@ -326,6 +324,7 @@ app.put('/api/restaurant', authRequired, subscriptionRequired, (req, res) => {
   if (Array.isArray(sections)) r.sections = sections;
   if (typeof published === 'boolean') r.published = published;
   if (brandColor !== undefined) r.brandColor = brandColor;
+  if (currency !== undefined) r.currency = currency;
   if (coverImage !== undefined) r.coverImage = coverImage; // data URI (base64) أو null لإزالتها
   writeDB(db);
   res.json(r);
@@ -336,10 +335,17 @@ app.get('/api/public/:slug', (req, res) => {
   const db = readDB();
   const r = db.restaurants.find(r => r.slug === req.params.slug && r.published);
   if (!r) return res.status(404).json({ error: 'هذا المنيو غير متاح', code: 'MENU_NOT_AVAILABLE' });
-  res.json({ name: r.name, desc: r.desc, sections: r.sections, brandColor: r.brandColor || null, coverImage: r.coverImage || null });
+  res.json({ name: r.name, desc: r.desc, sections: r.sections, brandColor: r.brandColor || null, coverImage: r.coverImage || null, currency: r.currency || '' });
 });
 
 initDB()
+  .then(() => {
+    // ترحيل لمرة واحدة: المطاعم المنشأة قبل إضافة خيار العملة كانت أسعارها بالدينار التونسي
+    const d = readDB();
+    let changed = 0;
+    d.restaurants.forEach(r => { if (r.currency === undefined) { r.currency = 'TND'; changed++; } });
+    if (changed) { writeDB(d); console.log(`↻ تم ضبط عملة ${changed} مطعم قديم إلى TND`); }
+  })
   .then(() => app.listen(PORT, () => console.log(`✅ صحنك يعمل على http://localhost:${PORT}`)))
   .catch(e => { console.error('❌ فشل تهيئة قاعدة البيانات:', e.message); process.exit(1); });
 

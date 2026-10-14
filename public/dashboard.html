@@ -32,6 +32,13 @@
     </div>
     <label data-i18n="lbl_rdesc">وصف مختصر (اختياري)</label>
     <textarea id="rdesc" rows="2" data-i18n-ph="ph_rdesc" placeholder="مقهى ومطعم يقدم المشروبات والفطور والحلويات"></textarea>
+
+    <label data-i18n="lbl_currency" style="margin-top:12px;">عملة الأسعار</label>
+    <div class="row">
+      <select id="currencySelect" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;background:var(--bg);color:var(--ink);"></select>
+      <input id="currencyOther" maxlength="3" style="display:none;text-transform:uppercase;" data-i18n-ph="currency_other_ph" placeholder="USD">
+    </div>
+    <div class="hint" data-i18n="currency_hint">ستُعرض أسعار منيو بهذه العملة.</div>
   </div>
 
   <div class="card">
@@ -52,7 +59,7 @@
 
   <div class="card">
     <div class="section-head">
-      <h3 style="margin:0" data-i18n="sections_title">أقسام المنيو والأصناف (الأسعار بالدينار التونسي)</h3>
+      <h3 style="margin:0" data-i18n="sections_title">أقسام المنيو والأصناف</h3>
       <button class="btn small" onclick="addSection()" data-i18n="btn_add_section">+ إضافة قسم</button>
     </div>
     <div id="sections"></div>
@@ -85,6 +92,7 @@ async function boot(){
   document.getElementById('rname').value = restaurant.name || '';
   document.getElementById('rslug').value = restaurant.slug || '';
   document.getElementById('rdesc').value = restaurant.desc || '';
+  fillCurrencySelect();
   document.getElementById('brandColor').value = restaurant.brandColor || '#e0632a';
   document.getElementById('brandColorHex').textContent = restaurant.brandColor || '#e0632a';
   renderCoverPreview();
@@ -135,10 +143,40 @@ function uid(){ return Date.now()+Math.floor(Math.random()*1000); }
 function escapeAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
 function escapeHtml(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
+function fillCurrencySelect(){
+  const sel = document.getElementById('currencySelect');
+  const other = document.getElementById('currencyOther');
+  const cur = (restaurant && restaurant.currency) || '';
+  const known = Sahnak.currencies.indexOf(cur) !== -1;
+  sel.innerHTML = '<option value="">' + t('currency_select') + '</option>' +
+    Sahnak.currencies.map(c => '<option value="' + c + '">' + escapeHtml(Sahnak.currencyName(c)) + '</option>').join('') +
+    '<option value="__other">' + t('currency_other') + '</option>';
+  sel.value = cur ? (known ? cur : '__other') : '';
+  other.style.display = sel.value === '__other' ? 'block' : 'none';
+  if(sel.value === '__other') other.value = cur;
+}
+document.getElementById('currencySelect').addEventListener('change', function(){
+  const other = document.getElementById('currencyOther');
+  if(this.value === '__other'){ other.style.display = 'block'; other.focus(); return; }
+  other.style.display = 'none';
+  saveRestaurant({ currency: this.value }).then(renderSections);
+});
+document.getElementById('currencyOther').addEventListener('change', function(){
+  const v = this.value.trim().toUpperCase();
+  this.value = v;
+  if(!/^[A-Z]{3}$/.test(v)){
+    const m = document.getElementById('saveMsg'); m.className = 'err'; m.textContent = t('err_BAD_CURRENCY'); return;
+  }
+  saveRestaurant({ currency: v }).then(renderSections);
+});
+
 async function saveRestaurant(extra){
   restaurant.name = document.getElementById('rname').value;
   restaurant.slug = document.getElementById('rslug').value.trim();
   restaurant.desc = document.getElementById('rdesc').value;
+  // نحفظ القيم السابقة لنتراجع عنها إن رفض الخادم الحفظ (مثل النشر دون اختيار عملة)
+  const backup = {};
+  Object.keys(extra || {}).forEach(k => { backup[k] = restaurant[k]; });
   Object.assign(restaurant, extra || {});
   const r = await fetch('/api/restaurant', {
     method:'PUT', headers:{'Content-Type':'application/json'}, credentials:'include',
@@ -146,10 +184,10 @@ async function saveRestaurant(extra){
   });
   const data = await r.json();
   const msg = document.getElementById('saveMsg');
-  if(!r.ok){ msg.className='err'; msg.textContent = Sahnak.err(data); return false; }
+  if(!r.ok){ Object.assign(restaurant, backup); msg.className='err'; msg.textContent = Sahnak.err(data); return false; }
   restaurant = data;
   msg.className='ok'; msg.textContent=t('save_ok');
-  setTimeout(()=> msg.textContent='', 1500);
+  setTimeout(()=>{ if(msg.className==='ok') msg.textContent=''; }, 1500); // لا نمسح رسائل الأخطاء
   return true;
 }
 ['rname','rslug','rdesc'].forEach(id=>{
@@ -180,7 +218,7 @@ function renderSections(){
       ${s.items.map(it=>`
         <div class="item">
           <div><input value="${escapeAttr(it.name)}" onchange="updateItem(${s.id},${it.id},'name',this.value)"></div>
-          <div class="price"><input value="${escapeAttr(it.price)}" placeholder="${t('currency')}" onchange="updateItem(${s.id},${it.id},'price',this.value)"></div>
+          <div class="price"><input value="${escapeAttr(it.price)}" placeholder="${escapeAttr(Sahnak.currencySymbol(restaurant.currency))}" onchange="updateItem(${s.id},${it.id},'price',this.value)"></div>
           <div><input placeholder="${t('ph_item_desc')}" value="${escapeAttr(it.desc)}" onchange="updateItem(${s.id},${it.id},'desc',this.value)"></div>
           <span class="pill ${it.avail?'on':'off'}" onclick="toggleAvail(${s.id},${it.id})">${it.avail?t('pill_avail'):t('pill_hidden')}</span>
           <button class="iconbtn" onclick="removeItem(${s.id},${it.id})">🗑</button>
@@ -295,7 +333,7 @@ function wrapCanvasText(ctx, text, cx, startY, maxWidth, lineHeight){
 }
 document.addEventListener('sahnak:lang-changed', function(){
   if(!restaurant) return;
-  renderSections(); renderStatus(); renderLink();
+  fillCurrencySelect(); renderSections(); renderStatus(); renderLink();
   fetch('/api/me', { credentials:'include' }).then(r=>r.json()).then(me=> renderUserbar(me.identifier));
 });
 boot();

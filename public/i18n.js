@@ -1,4 +1,4 @@
-// نظام الترجمة الثلاثية (عربي/إنجليزي/فرنسي) المشترك بين كل صفحات صحنك
+// نظام الترجمة الرباعي (عربي/إنجليزي/فرنسي/تركي) المشترك بين كل صفحات صحنك
 (function(){
 const DICT = {
 ar: { dir:'rtl', logo:'صحنك',
@@ -21,7 +21,7 @@ ar: { dir:'rtl', logo:'صحنك',
   cta_title:'قائمتك الورقية تنتظر التحديث منذ متى؟',
   cta_sub:'انضم الآن، وحوّل مطعمك إلى تجربة رقمية عصرية يحبها زبائنك — ولا يتطلب أي خبرة تقنية.',
   cta_btn:'أنشئ منيو مطعمك الآن',
-  footer:'صحنك — منيو رقمية للمطاعم والمقاهي في تونس',
+  footer:'صحنك — منيو رقمية للمطاعم والمقاهي حول العالم',
 
   auth_title:'الدخول إلى صحنك', auth_sub:'يجب إنشاء حساب قبل الوصول إلى لوحة الإدارة',
   tab_signup:'إنشاء حساب', tab_login:'تسجيل الدخول',
@@ -33,9 +33,10 @@ ar: { dir:'rtl', logo:'صحنك',
   sent_to:'أرسلنا رمزًا مكوّنًا من 6 أرقام إلى',
   lbl_code:'أدخل رمز التحقق',
   btn_confirm:'تأكيد وإنشاء الحساب', btn_back:'رجوع', btn_login:'تسجيل الدخول',
+  legal_terms:'الشروط والأحكام', legal_privacy:'سياسة الخصوصية', legal_agree:'بإنشاء حساب فإنك توافق على ', legal_and:' و', legal_home:'العودة للرئيسية',
   forgot_link:'نسيت كلمة المرور؟',
-  forgot_title:'استعادة كلمة المرور', forgot_sub:'أدخل البريد الإلكتروني أو رقم الهاتف الذي سجّلت به.',
-  forgot_id_label:'البريد الإلكتروني أو رقم الهاتف',
+  forgot_title:'استعادة كلمة المرور', forgot_sub:'أدخل البريد الإلكتروني الذي سجّلت به وسنرسل إليه رابط تعيين كلمة مرور جديدة.',
+  forgot_id_label:'البريد الإلكتروني',
   recovery_note:'هذا الحساب مسجّل برقم هاتف. أدخل بريدك الإلكتروني لإرسال رابط الاستعادة إليه (سيُحفظ لاستخدامه في المرات القادمة).',
   recovery_email_label:'بريدك الإلكتروني',
   btn_send_reset:'إرسال رابط الاستعادة',
@@ -46,11 +47,11 @@ ar: { dir:'rtl', logo:'صحنك',
   logged_as:'مسجّل الدخول بحساب:', btn_logout:'تسجيل الخروج', sub_badge:'مشترك ✅',
   restaurant_info:'بيانات المطعم (حسابك الخاص)', lbl_rname:'اسم المطعم', ph_rname:'مقهى الدار',
   lbl_rslug:'الرابط المختصر', lbl_rdesc:'وصف مختصر (اختياري)', ph_rdesc:'مقهى ومطعم يقدم المشروبات والفطور والحلويات',
-  sections_title:'أقسام المنيو والأصناف (الأسعار بالدينار التونسي)', btn_add_section:'+ إضافة قسم',
+  sections_title:'أقسام المنيو والأصناف', btn_add_section:'+ إضافة قسم',
   status_label:'الحالة:', status_pub:'منشور', status_draft:'مسودة',
   btn_publish:'نشر المنيو', btn_unpublish:'إلغاء النشر',
   public_link:'الرابط العام', btn_preview:'فتح معاينة المنيو', preview_any_menu:'معاينة أي منيو منشور',
-  new_section:'قسم جديد', btn_add_item:'➕ صنف', ph_item_desc:'وصف الصنف', currency:'د.ت',
+  new_section:'قسم جديد', btn_add_item:'➕ صنف', ph_item_desc:'وصف الصنف',
   pill_avail:'متاح', pill_hidden:'مخفي',
   empty_sections:'لا توجد أقسام بعد.', empty_items:'لا توجد أصناف.',
   alert_need_slug:'أدخل الرابط المختصر أولًا.', save_ok:'تم الحفظ ✓',
@@ -61,7 +62,7 @@ ar: { dir:'rtl', logo:'صحنك',
   pay_steps_title:'خطوات الدفع:',
   pay_step1:'حوّل المبلغ أعلاه عبر', pay_step2:'اضغط "لقد قمت بالتحويل" في أسفل الصفحة.',
   pay_step3:'سيراجع صاحب الموقع التحويل ويُفعّل حسابك يدويًا خلال وقت قصير.',
-  phone_label:'رقم Flouci', rib_label:'أو رقم الحساب البنكي (RIB)',
+  phone_label:'رقم الدفع / الحساب', rib_label:'أو الحساب البنكي (IBAN / RIB)',
   note_label:'ملاحظة (اختياري — مثلاً اسمك في التحويل)', note_ph:'حوّلت من حساب باسم...',
   btn_claim:'لقد قمت بالتحويل', rejected_msg:'تم رفض طلب التحويل السابق، يمكنك إرسال طلب جديد بعد التأكد من التحويل.',
 
@@ -84,7 +85,7 @@ ar: { dir:'rtl', logo:'صحنك',
   err_ACCOUNT_EXISTS:'يوجد حساب مسجّل بهذه البيانات مسبقًا، جرّب تسجيل الدخول.', err_SEND_CODE_FAILED:'تعذّر إرسال رمز التحقق الآن.',
   err_NO_PENDING_CODE:'لم يتم طلب رمز لهذا الحساب.', err_CODE_EXPIRED:'انتهت صلاحية الرمز، اطلب رمزًا جديدًا.',
   err_WRONG_CODE:'الرمز غير صحيح، حاول مجددًا.', err_INVALID_LOGIN:'بيانات الدخول غير صحيحة أو الحساب غير موجود.',
-  err_MISSING_IDENTIFIER:'أدخل بريدك الإلكتروني أو رقم هاتفك.', err_ACCOUNT_NOT_FOUND:'لا يوجد حساب مسجّل بهذه البيانات.',
+  err_MISSING_IDENTIFIER:"أدخل بريدك الإلكتروني.", err_ACCOUNT_NOT_FOUND:'لا يوجد حساب مسجّل بهذه البيانات.',
   err_SEND_RESET_FAILED:'تعذّر إرسال رابط الاستعادة الآن.', err_INVALID_TOKEN:'رابط غير صالح.',
   err_TOKEN_EXPIRED:'انتهت صلاحية الرابط، اطلب رابطًا جديدًا.', err_USER_NOT_FOUND:'المستخدم غير موجود.',
   err_SLUG_TAKEN:'الرابط المختصر مستخدم من مطعم آخر، اختر رابطًا مختلفًا.', err_RESTAURANT_NOT_FOUND:'لم يتم العثور على المطعم.',
@@ -92,6 +93,9 @@ ar: { dir:'rtl', logo:'صحنك',
   err_ADMIN_WRONG_PASSWORD:'كلمة مرور المشرف غير صحيحة.', err_ADMIN_NOT_CONFIGURED:'لم يتم إعداد كلمة مرور المشرف بعد.',
   err_CLAIM_NOT_FOUND:'الطلب غير موجود.', err_MENU_NOT_AVAILABLE:'هذا المنيو غير متاح.',
   err_BAD_COLOR:'لون غير صالح.', err_IMAGE_TOO_LARGE:'حجم الصورة كبير جدًا، اختر صورة أصغر.',
+
+  lbl_currency:'عملة الأسعار', currency_hint:'ستُعرض أسعار منيو بهذه العملة.', currency_select:'— اختر العملة —', currency_other:'أخرى…', currency_other_ph:'مثال: USD',
+  err_BAD_CURRENCY:'رمز العملة غير صالح (3 أحرف مثل USD).', err_CURRENCY_REQUIRED:'اختر عملة الأسعار قبل نشر المنيو.',
 
   branding_title:'تخصيص مظهر المنيو', brand_color_label:'لون الهوية (يُستخدم في رمز QR وألوان الصفحة)',
   cover_image_label:'صورة غلاف المنيو (اختياري)', btn_upload_cover:'رفع صورة', btn_remove_cover:'إزالة الصورة',
@@ -119,7 +123,7 @@ en: { dir:'ltr', logo:'Sahnak',
   cta_title:'How long has your paper menu needed updating?',
   cta_sub:'Join now and turn your restaurant into a modern digital experience your customers will love — no technical skill required.',
   cta_btn:'Build your menu now',
-  footer:'Sahnak — digital menus for restaurants and cafes in Tunisia',
+  footer:'Sahnak — digital menus for restaurants and cafes worldwide',
 
   auth_title:'Sign in to Sahnak', auth_sub:'You must create an account before accessing the admin panel',
   tab_signup:'Create account', tab_login:'Sign in',
@@ -131,9 +135,10 @@ en: { dir:'ltr', logo:'Sahnak',
   sent_to:'We sent a 6-digit code to',
   lbl_code:'Enter verification code',
   btn_confirm:'Confirm & create account', btn_back:'Back', btn_login:'Sign in',
+  legal_terms:'Terms of Service', legal_privacy:'Privacy Policy', legal_agree:'By creating an account you agree to the ', legal_and:' and ', legal_home:'Back to home',
   forgot_link:'Forgot your password?',
-  forgot_title:'Reset your password', forgot_sub:'Enter the email or phone number you signed up with.',
-  forgot_id_label:'Email or phone number',
+  forgot_title:'Reset your password', forgot_sub:'Enter the email you signed up with and we will send you a link to set a new password.',
+  forgot_id_label:'Email address',
   recovery_note:'This account is registered by phone. Enter your email to receive the reset link (it will be saved for next time).',
   recovery_email_label:'Your email',
   btn_send_reset:'Send reset link',
@@ -144,11 +149,11 @@ en: { dir:'ltr', logo:'Sahnak',
   logged_as:'Signed in as:', btn_logout:'Log out', sub_badge:'Subscribed ✅',
   restaurant_info:'Restaurant details (your account)', lbl_rname:'Restaurant name', ph_rname:'Dar Cafe',
   lbl_rslug:'Short link', lbl_rdesc:'Short description (optional)', ph_rdesc:'A cafe serving drinks, breakfast and desserts',
-  sections_title:'Menu sections & items (prices in Tunisian dinar)', btn_add_section:'+ Add section',
+  sections_title:'Menu sections & items', btn_add_section:'+ Add section',
   status_label:'Status:', status_pub:'Published', status_draft:'Draft',
   btn_publish:'Publish menu', btn_unpublish:'Unpublish',
   public_link:'Public link', btn_preview:'Open menu preview', preview_any_menu:'Preview any published menu',
-  new_section:'New section', btn_add_item:'➕ Item', ph_item_desc:'Item description', currency:'TND',
+  new_section:'New section', btn_add_item:'➕ Item', ph_item_desc:'Item description',
   pill_avail:'Available', pill_hidden:'Hidden',
   empty_sections:'No sections yet.', empty_items:'No items yet.',
   alert_need_slug:'Enter the short link first.', save_ok:'Saved ✓',
@@ -159,7 +164,7 @@ en: { dir:'ltr', logo:'Sahnak',
   pay_steps_title:'Payment steps:',
   pay_step1:'Transfer the amount above via', pay_step2:'Click "I\'ve made the transfer" at the bottom of the page.',
   pay_step3:'The site owner will review the transfer and activate your account shortly.',
-  phone_label:'Flouci number', rib_label:'Or bank account number (RIB)',
+  phone_label:'Payment number / account', rib_label:'Or bank account (IBAN / RIB)',
   note_label:'Note (optional — e.g. your name on the transfer)', note_ph:'Transferred from an account under...',
   btn_claim:"I've made the transfer", rejected_msg:'Your previous transfer request was rejected, you can send a new one after confirming the transfer.',
 
@@ -182,7 +187,7 @@ en: { dir:'ltr', logo:'Sahnak',
   err_ACCOUNT_EXISTS:'An account already exists with this info, try signing in.', err_SEND_CODE_FAILED:'Could not send the verification code right now.',
   err_NO_PENDING_CODE:'No code was requested for this account.', err_CODE_EXPIRED:'The code has expired, request a new one.',
   err_WRONG_CODE:'Incorrect code, try again.', err_INVALID_LOGIN:'Invalid credentials or account not found.',
-  err_MISSING_IDENTIFIER:'Enter your email or phone number.', err_ACCOUNT_NOT_FOUND:'No account found with this info.',
+  err_MISSING_IDENTIFIER:"Enter your email address.", err_ACCOUNT_NOT_FOUND:'No account found with this info.',
   err_SEND_RESET_FAILED:'Could not send the reset link right now.', err_INVALID_TOKEN:'Invalid link.',
   err_TOKEN_EXPIRED:'The link has expired, request a new one.', err_USER_NOT_FOUND:'User not found.',
   err_SLUG_TAKEN:'This short link is already used by another restaurant, choose a different one.', err_RESTAURANT_NOT_FOUND:'Restaurant not found.',
@@ -190,6 +195,9 @@ en: { dir:'ltr', logo:'Sahnak',
   err_ADMIN_WRONG_PASSWORD:'Incorrect admin password.', err_ADMIN_NOT_CONFIGURED:'Admin password not configured yet.',
   err_CLAIM_NOT_FOUND:'Request not found.', err_MENU_NOT_AVAILABLE:'This menu is not available.',
   err_BAD_COLOR:'Invalid color.', err_IMAGE_TOO_LARGE:'Image is too large, pick a smaller one.',
+
+  lbl_currency:'Price currency', currency_hint:'Prices on your menu will be shown in this currency.', currency_select:'— Select currency —', currency_other:'Other…', currency_other_ph:'e.g. USD',
+  err_BAD_CURRENCY:'Invalid currency code (3 letters, e.g. USD).', err_CURRENCY_REQUIRED:'Choose your price currency before publishing the menu.',
 
   branding_title:'Customize menu appearance', brand_color_label:'Brand color (used in the QR code and page accents)',
   cover_image_label:'Menu cover image (optional)', btn_upload_cover:'Upload image', btn_remove_cover:'Remove image',
@@ -217,7 +225,7 @@ fr: { dir:'ltr', logo:'Sahnak',
   cta_title:'Depuis quand votre menu papier attend une mise à jour ?',
   cta_sub:'Rejoignez maintenant, et transformez votre restaurant en une expérience numérique moderne que vos clients adoreront — sans aucune compétence technique requise.',
   cta_btn:'Créez votre menu maintenant',
-  footer:'Sahnak — menus numériques pour restaurants et cafés en Tunisie',
+  footer:'Sahnak — menus numériques pour restaurants et cafés dans le monde entier',
 
   auth_title:'Connexion à Sahnak', auth_sub:"Vous devez créer un compte avant d'accéder à l'espace admin",
   tab_signup:'Créer un compte', tab_login:'Se connecter',
@@ -229,9 +237,10 @@ fr: { dir:'ltr', logo:'Sahnak',
   sent_to:'Nous avons envoyé un code à 6 chiffres à',
   lbl_code:'Entrez le code de vérification',
   btn_confirm:'Confirmer et créer le compte', btn_back:'Retour', btn_login:'Se connecter',
+  legal_terms:"Conditions d'utilisation", legal_privacy:'Politique de confidentialité', legal_agree:"En créant un compte, vous acceptez les ", legal_and:' et la ', legal_home:"Retour à l'accueil",
   forgot_link:'Mot de passe oublié ?',
-  forgot_title:'Réinitialiser le mot de passe', forgot_sub:"Entrez l'e-mail ou le numéro de téléphone utilisé à l'inscription.",
-  forgot_id_label:'E-mail ou numéro de téléphone',
+  forgot_title:'Réinitialiser le mot de passe', forgot_sub:"Entrez l'e-mail utilisé à l'inscription et nous vous enverrons un lien pour définir un nouveau mot de passe.",
+  forgot_id_label:'Adresse e-mail',
   recovery_note:"Ce compte est enregistré par téléphone. Entrez votre e-mail pour recevoir le lien de réinitialisation (il sera enregistré pour la prochaine fois).",
   recovery_email_label:'Votre e-mail',
   btn_send_reset:'Envoyer le lien de réinitialisation',
@@ -242,11 +251,11 @@ fr: { dir:'ltr', logo:'Sahnak',
   logged_as:'Connecté en tant que :', btn_logout:'Se déconnecter', sub_badge:'Abonné ✅',
   restaurant_info:'Informations du restaurant (votre compte)', lbl_rname:'Nom du restaurant', ph_rname:'Dar Cafe',
   lbl_rslug:'Lien court', lbl_rdesc:'Description courte (optionnel)', ph_rdesc:'Un café proposant boissons, petit-déjeuner et desserts',
-  sections_title:'Sections du menu et articles (prix en dinar tunisien)', btn_add_section:'+ Ajouter une section',
+  sections_title:'Sections du menu et articles', btn_add_section:'+ Ajouter une section',
   status_label:'Statut :', status_pub:'Publié', status_draft:'Brouillon',
   btn_publish:'Publier le menu', btn_unpublish:'Dépublier',
   public_link:'Lien public', btn_preview:"Ouvrir l'aperçu du menu", preview_any_menu:'Aperçu de tout menu publié',
-  new_section:'Nouvelle section', btn_add_item:'➕ Article', ph_item_desc:"Description de l'article", currency:'DT',
+  new_section:'Nouvelle section', btn_add_item:'➕ Article', ph_item_desc:"Description de l'article",
   pill_avail:'Disponible', pill_hidden:'Masqué',
   empty_sections:'Aucune section pour le moment.', empty_items:'Aucun article pour le moment.',
   alert_need_slug:"Entrez d'abord le lien court.", save_ok:'Enregistré ✓',
@@ -257,7 +266,7 @@ fr: { dir:'ltr', logo:'Sahnak',
   pay_steps_title:'Étapes du paiement :',
   pay_step1:'Virez le montant ci-dessus via', pay_step2:'Cliquez sur « J\'ai effectué le virement » en bas de la page.',
   pay_step3:'Le propriétaire du site vérifiera le virement et activera votre compte sous peu.',
-  phone_label:'Numéro Flouci', rib_label:'Ou numéro de compte bancaire (RIB)',
+  phone_label:'Numéro / compte de paiement', rib_label:'Ou compte bancaire (IBAN / RIB)',
   note_label:'Note (optionnel — ex. votre nom sur le virement)', note_ph:'Viré depuis un compte au nom de...',
   btn_claim:"J'ai effectué le virement", rejected_msg:"Votre précédente demande de virement a été rejetée, vous pouvez en envoyer une nouvelle après avoir confirmé le virement.",
 
@@ -280,7 +289,7 @@ fr: { dir:'ltr', logo:'Sahnak',
   err_ACCOUNT_EXISTS:'Un compte existe déjà avec ces informations, essayez de vous connecter.', err_SEND_CODE_FAILED:"Impossible d'envoyer le code pour le moment.",
   err_NO_PENDING_CODE:'Aucun code demandé pour ce compte.', err_CODE_EXPIRED:'Le code a expiré, demandez-en un nouveau.',
   err_WRONG_CODE:'Code incorrect, réessayez.', err_INVALID_LOGIN:'Identifiants invalides ou compte introuvable.',
-  err_MISSING_IDENTIFIER:'Entrez votre e-mail ou numéro de téléphone.', err_ACCOUNT_NOT_FOUND:'Aucun compte trouvé avec ces informations.',
+  err_MISSING_IDENTIFIER:"Entrez votre adresse e-mail.", err_ACCOUNT_NOT_FOUND:'Aucun compte trouvé avec ces informations.',
   err_SEND_RESET_FAILED:'Impossible d\'envoyer le lien pour le moment.', err_INVALID_TOKEN:'Lien invalide.',
   err_TOKEN_EXPIRED:'Le lien a expiré, demandez-en un nouveau.', err_USER_NOT_FOUND:'Utilisateur introuvable.',
   err_SLUG_TAKEN:"Ce lien court est déjà utilisé par un autre restaurant, choisissez-en un autre.", err_RESTAURANT_NOT_FOUND:'Restaurant introuvable.',
@@ -289,15 +298,161 @@ fr: { dir:'ltr', logo:'Sahnak',
   err_CLAIM_NOT_FOUND:'Demande introuvable.', err_MENU_NOT_AVAILABLE:"Ce menu n'est pas disponible.",
   err_BAD_COLOR:'Couleur invalide.', err_IMAGE_TOO_LARGE:'Image trop volumineuse, choisissez-en une plus petite.',
 
+  lbl_currency:'Devise des prix', currency_hint:'Les prix de votre menu seront affichés dans cette devise.', currency_select:'— Choisir la devise —', currency_other:'Autre…', currency_other_ph:'ex. USD',
+  err_BAD_CURRENCY:'Code de devise invalide (3 lettres, ex. USD).', err_CURRENCY_REQUIRED:'Choisissez la devise des prix avant de publier le menu.',
+
   branding_title:'Personnaliser l\'apparence du menu', brand_color_label:'Couleur de marque (utilisée dans le code QR et les accents de la page)',
   cover_image_label:'Image de couverture du menu (optionnel)', btn_upload_cover:'Téléverser une image', btn_remove_cover:'Supprimer l\'image',
   cover_hint:'Cette image apparaîtra en bannière en haut de votre page de menu publique.',
   scan_caption:'Scannez pour voir le menu',
   btn_download_sticker:'Télécharger l\'autocollant QR imprimable', sticker_hint:'Un autocollant prêt à imprimer pour vos tables.'
+},
+tr: { dir:'ltr', logo:'Sahnak',
+  nav_login:'Giriş yap / Hesap oluştur',
+  home_title:'Restoran menünüzü kolayca dijital menüye dönüştürün',
+  home_sub:'Kendi hesabınızı oluşturun, menünüzü hazırlayın ve müşterilerinizin telefonlarından doğrudan açtığı bir bağlantı ile QR kod paylaşın. Bir daha asla yeniden baskı yok.',
+  home_cta:'Hemen başlayın',
+  stat1:'0', stat1_l:'Gereken yeniden baskı',
+  stat2:'Dakikalar', stat2_l:'Eksiksiz bir menü için',
+  stat3:'7/24', stat3_l:'Menü her zaman erişilebilir',
+  why_title:"Restoran sahipleri neden Sahnak'ı seçiyor?",
+  why_sub:'Menünüzün ihtiyaç duyduğu her güncelleme — yeni bir fiyat, mevsimlik bir ürün, tükenen bir yemeği gizlemek — günler ya da baskı maliyeti değil, saniyeler sürer.',
+  feat1t:'⚡ Hızlı güncellemeler', feat1s:'Yönetim panelinden bir fiyatı değiştirin ya da bir ürünü saniyeler içinde gizleyin; matbaaya veya yeni bir tasarıma gerek yok.',
+  feat2t:'🔗 Size özel bağlantı ve QR kod', feat2s:'Restoran adınızı taşıyan herkese açık bir bağlantı ve masalara ya da kasaya koyabileceğiniz, yazdırılabilir bir QR kod.',
+  feat3t:'📱 Temiz bir mobil deneyim', feat3s:'Müşterinin tarayıcısından doğrudan açılan, temiz ve duyarlı bir menü sayfası; uygulama gerekmez.',
+  steps_title:'3 adımda başlayın', steps_sub:'Kayıttan, taranmaya hazır yayımlanmış bir menüye; teknik zorluk olmadan.',
+  step1t:'Hesabınızı oluşturun', step1s:'E-postanız ve bir şifre — kayıt bir dakikadan kısa sürer.',
+  step2t:'Menünüzü hazırlayın', step2s:'Bölümlerinizi, ürünlerinizi ve fiyatlarınızı ekleyin.',
+  step3t:'Yayımlayın ve bağlantınızı paylaşın', step3s:'Anında bir bağlantı ve QR kod alın, yazdırın ve müşterilerinize dijital olarak hizmet vermeye başlayın.',
+  cta_title:'Kâğıt menünüz ne zamandır güncelleme bekliyor?',
+  cta_sub:'Hemen katılın ve restoranınızı müşterilerinizin seveceği modern bir dijital deneyime dönüştürün — teknik beceri gerekmez.',
+  cta_btn:'Menünüzü şimdi oluşturun',
+  footer:'Sahnak — dünya genelinde restoranlar ve kafeler için dijital menüler',
+
+  auth_title:"Sahnak'a giriş yapın", auth_sub:'Yönetim paneline erişmeden önce bir hesap oluşturmalısınız',
+  tab_signup:'Hesap oluştur', tab_login:'Giriş yap',
+  m_email:'E-posta', m_phone:'Telefon numarası',
+  lbl_email:'E-posta adresi', lbl_phone:'Telefon numarası',
+  lbl_pass:'Şifre', ph_pass:'En az 8 karakter',
+  lbl_pass2:'Şifreyi onaylayın', ph_pass2:'Şifrenizi tekrar girin',
+  btn_send_code:'Doğrulama kodu gönder',
+  sent_to:'6 haneli bir kod gönderdik:',
+  lbl_code:'Doğrulama kodunu girin',
+  btn_confirm:'Onayla ve hesabı oluştur', btn_back:'Geri', btn_login:'Giriş yap',
+  legal_terms:'Kullanım Koşulları', legal_privacy:'Gizlilik Politikası', legal_agree:'Hesap oluşturarak şunları kabul edersiniz: ', legal_and:' ve ', legal_home:'Ana sayfaya dön',
+  forgot_link:'Şifrenizi mi unuttunuz?',
+  forgot_title:'Şifrenizi sıfırlayın', forgot_sub:'Kaydolurken kullandığınız e-postayı girin; yeni bir şifre belirlemeniz için size bir bağlantı gönderelim.',
+  forgot_id_label:'E-posta adresi',
+  recovery_note:'Bu hesap telefonla kayıtlı. Sıfırlama bağlantısını almak için e-postanızı girin (bir sonraki sefer için kaydedilecektir).',
+  recovery_email_label:'E-postanız',
+  btn_send_reset:'Sıfırlama bağlantısı gönder',
+  reset_sent_prefix:'Sıfırlama bağlantısı gönderildi:',
+  dev_note_smtp:'Henüz gerçek bir SMTP yapılandırılmadı — bağlantıyı görmek için sunucu günlüklerine (Logs) bakın.',
+  btn_back_login:'Girişe dön',
+
+  logged_as:'Giriş yapan hesap:', btn_logout:'Çıkış yap', sub_badge:'Abone ✅',
+  restaurant_info:'Restoran bilgileri (hesabınız)', lbl_rname:'Restoran adı', ph_rname:'Lezzet Cafe',
+  lbl_rslug:'Kısa bağlantı', lbl_rdesc:'Kısa açıklama (isteğe bağlı)', ph_rdesc:'İçecek, kahvaltı ve tatlı servisi yapan bir kafe',
+  sections_title:'Menü bölümleri ve ürünler', btn_add_section:'+ Bölüm ekle',
+  status_label:'Durum:', status_pub:'Yayında', status_draft:'Taslak',
+  btn_publish:'Menüyü yayımla', btn_unpublish:'Yayından kaldır',
+  public_link:'Herkese açık bağlantı', btn_preview:'Menü önizlemesini aç', preview_any_menu:'Yayımlanmış herhangi bir menüyü önizle',
+  new_section:'Yeni bölüm', btn_add_item:'➕ Ürün', ph_item_desc:'Ürün açıklaması',
+  pill_avail:'Mevcut', pill_hidden:'Gizli',
+  empty_sections:'Henüz bölüm yok.', empty_items:'Henüz ürün yok.',
+  alert_need_slug:'Önce kısa bağlantıyı girin.', save_ok:'Kaydedildi ✓',
+
+  billing_title:'Yönetim paneline erişmek için abone olun', billing_sub:'Basit bir manuel havale; hesabınız incelemeden kısa süre sonra etkinleştirilir',
+  pending_msg:'Talebiniz alındı ve inceleniyor. Havale onaylandığında hesabınız otomatik olarak etkinleştirilecek.',
+  monthly_sub:'Aylık abonelik',
+  pay_steps_title:'Ödeme adımları:',
+  pay_step1:'Yukarıdaki tutarı şu yolla gönderin:', pay_step2:'Sayfanın altındaki «Havaleyi yaptım» düğmesine tıklayın.',
+  pay_step3:'Site sahibi havaleyi inceleyip hesabınızı kısa süre içinde etkinleştirecek.',
+  phone_label:'Ödeme numarası / hesabı', rib_label:'Veya banka hesabı (IBAN / RIB)',
+  note_label:'Not (isteğe bağlı — örn. havaledeki adınız)', note_ph:'Şu adla bir hesaptan gönderildi...',
+  btn_claim:'Havaleyi yaptım', rejected_msg:'Önceki havale talebiniz reddedildi; havaleyi doğruladıktan sonra yeni bir talep gönderebilirsiniz.',
+
+  menu_no_slug:'Bağlantıya ?slug=restoran-adi ekleyin.', menu_not_published:'Bu menü şu anda kullanılamıyor.',
+
+  reset_title:'Yeni şifre belirleyin', reset_pass1:'Yeni şifre', reset_pass2:'Şifreyi onaylayın',
+  btn_reset:'Şifreyi belirle', reset_ok:'Şifre başarıyla değiştirildi ✅', btn_login_now:'Şimdi giriş yap',
+  reset_invalid:'Bu bağlantı geçersiz veya süresi dolmuş.', btn_back_to_login:'Girişe dön',
+
+  admin_login_title:'Yönetici girişi', admin_pw_label:'Yönetici şifresi', btn_admin_login:'Giriş yap',
+  admin_panel_title:'Abonelik talepleri paneli', pending_requests:'Bekleyen talepler', all_requests:'Tüm talepler (geçmiş)',
+  no_pending:'Şu anda bekleyen talep yok.', no_requests:'Henüz talep yok.',
+  status_approved:'Onaylandı ✅', status_rejected:'Reddedildi ✕', status_pending:'İnceleniyor',
+  btn_approve:'Onayla', btn_reject:'Reddet', note_prefix:'Not:',
+
+  err_server:'Sunucuya bağlanılamadı.', err_generic:'Bir hata oluştu',
+  err_MISSING_FIELDS:'Eksik bilgi', err_BAD_EMAIL:'Geçerli bir e-posta adresi girin.', err_BAD_PHONE:'Geçerli bir telefon numarası girin.',
+  err_SHORT_PASSWORD:'Şifre en az 8 karakter olmalıdır.', err_PASSWORD_MISMATCH:'Şifreler eşleşmiyor.',
+  err_PHONE_SIGNUP_DISABLED:'Telefonla kayıt şu anda kullanılamıyor, lütfen e-postanızı kullanın.', phone_signup_off:'Yeni kayıtlar şu anda yalnızca e-posta ile yapılabilir. Telefonla açılmış mevcut hesaplar her zamanki gibi giriş yapabilir.',
+  err_ACCOUNT_EXISTS:'Bu bilgilerle zaten bir hesap var, giriş yapmayı deneyin.', err_SEND_CODE_FAILED:'Doğrulama kodu şu anda gönderilemedi.',
+  err_NO_PENDING_CODE:'Bu hesap için kod istenmedi.', err_CODE_EXPIRED:'Kodun süresi doldu, yenisini isteyin.',
+  err_WRONG_CODE:'Hatalı kod, tekrar deneyin.', err_INVALID_LOGIN:'Geçersiz bilgiler veya hesap bulunamadı.',
+  err_MISSING_IDENTIFIER:'E-posta adresinizi girin.', err_ACCOUNT_NOT_FOUND:'Bu bilgilerle hesap bulunamadı.',
+  err_SEND_RESET_FAILED:'Sıfırlama bağlantısı şu anda gönderilemedi.', err_INVALID_TOKEN:'Geçersiz bağlantı.',
+  err_TOKEN_EXPIRED:'Bağlantının süresi doldu, yenisini isteyin.', err_USER_NOT_FOUND:'Kullanıcı bulunamadı.',
+  err_SLUG_TAKEN:'Bu kısa bağlantı başka bir restoran tarafından kullanılıyor, farklı bir tane seçin.', err_RESTAURANT_NOT_FOUND:'Restoran bulunamadı.',
+  err_SUBSCRIPTION_REQUIRED:'Önce abone olmalısınız.', err_AUTH_REQUIRED:'Giriş yapmalısınız.', err_INVALID_SESSION:'Geçersiz oturum, lütfen tekrar giriş yapın.',
+  err_ADMIN_WRONG_PASSWORD:'Yönetici şifresi hatalı.', err_ADMIN_NOT_CONFIGURED:'Yönetici şifresi henüz ayarlanmadı.',
+  err_CLAIM_NOT_FOUND:'Talep bulunamadı.', err_MENU_NOT_AVAILABLE:'Bu menü kullanılamıyor.',
+  err_BAD_COLOR:'Geçersiz renk.', err_IMAGE_TOO_LARGE:'Görsel çok büyük, daha küçük bir tane seçin.',
+
+  lbl_currency:'Fiyat para birimi', currency_hint:'Menünüzdeki fiyatlar bu para biriminde gösterilir.', currency_select:'— Para birimi seçin —', currency_other:'Diğer…', currency_other_ph:'örn. USD',
+  err_BAD_CURRENCY:'Geçersiz para birimi kodu (3 harf, örn. USD).', err_CURRENCY_REQUIRED:'Menüyü yayımlamadan önce fiyat para birimini seçin.',
+
+  branding_title:'Menü görünümünü özelleştirin', brand_color_label:'Marka rengi (QR kodda ve sayfa vurgularında kullanılır)',
+  cover_image_label:'Menü kapak görseli (isteğe bağlı)', btn_upload_cover:'Görsel yükle', btn_remove_cover:'Görseli kaldır',
+  cover_hint:'Bu görsel, herkese açık menü sayfanızın en üstünde bir başlık görseli olarak görünür.',
+  scan_caption:'Menüyü görmek için tarayın',
+  btn_download_sticker:'Yazdırılabilir QR etiketini indir', sticker_hint:'Restoran masalarınıza yapıştırabileceğiniz, baskıya hazır bir etiket.'
 }
 };
 
-let lang = localStorage.getItem('sahnak_lang') || 'ar';
+var LANG_ORDER = ['ar','en','fr','tr'];
+function detectLang(){
+  var list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
+  for (var i = 0; i < list.length; i++){
+    var code = String(list[i]).toLowerCase().split('-')[0];
+    if (DICT[code]) return code;
+  }
+  return 'en';
+}
+let lang = (function(){
+  var saved = null;
+  try{ saved = localStorage.getItem('sahnak_lang'); }catch(e){}
+  return (saved && DICT[saved]) ? saved : detectLang();
+})();
+
+// أزرار اللغات تُبنى من القاموس، فإضافة لغة جديدة لا تتطلب تعديل أي صفحة
+function buildLangBars(){
+  document.querySelectorAll('.langbar').forEach(function(bar){
+    bar.innerHTML = '';
+    LANG_ORDER.forEach(function(code){
+      var b = document.createElement('button');
+      b.className = 'langbtn'; b.type = 'button'; b.dataset.lang = code;
+      b.textContent = code.toUpperCase();
+      b.addEventListener('click', function(){ setLang(code); });
+      bar.appendChild(b);
+    });
+  });
+}
+
+// العملات: قائمة شائعة، والأسماء والرموز تُترجم تلقائيًا حسب لغة الواجهة
+var CURRENCIES = ['USD','EUR','GBP','TRY','TND','SAR','AED','QAR','KWD','BHD','OMR','JOD','EGP','MAD','DZD','LYD','LBP','IQD','CAD','AUD','NZD','CHF','JPY','CNY','HKD','SGD','INR','PKR','BDT','IDR','MYR','THB','PHP','KRW','VND','RUB','UAH','PLN','CZK','HUF','RON','BGN','SEK','NOK','DKK','ILS','ZAR','NGN','KES','GHS','BRL','MXN','ARS','CLP','COP','PEN'];
+function currencySymbol(code){
+  if(!code) return '';
+  try{
+    var parts = new Intl.NumberFormat(lang, { style:'currency', currency: code, currencyDisplay:'symbol' }).formatToParts(0);
+    for (var i = 0; i < parts.length; i++){ if (parts[i].type === 'currency') return parts[i].value; }
+  }catch(e){}
+  return code;
+}
+function currencyName(code){
+  try{ return new Intl.DisplayNames([lang], { type:'currency' }).of(code) + ' (' + code + ')'; }catch(e){ return code; }
+}
 
 function t(key){
   return (DICT[lang] && DICT[lang][key]) || DICT.ar[key] || key;
@@ -326,7 +481,9 @@ function err(data){
   return (data && data.error) || t('err_generic');
 }
 
-window.Sahnak = { setLang: setLang, t: t, getLang: function(){ return lang; }, err: err };
+window.Sahnak = { setLang: setLang, t: t, getLang: function(){ return lang; }, err: err,
+  currencies: CURRENCIES, currencySymbol: currencySymbol, currencyName: currencyName };
 
+buildLangBars();
 applyStatic();
 })();

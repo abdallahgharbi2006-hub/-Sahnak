@@ -52,7 +52,7 @@ function render(){
         <div class="menu-item ${it.avail?'':'unavail'}">
           <div><h4 style="margin:0 0 4px;font-size:15px;">${escapeHtml(it.name)}</h4>
             <p style="margin:0;color:var(--sub);font-size:13px;">${escapeHtml(it.desc)}</p></div>
-          <div class="p" style="color:${color};">${escapeHtml(it.price)} ${t('currency')}</div>
+          <div class="p" style="color:${color};">${escapeHtml(it.price)} ${escapeHtml(Sahnak.currencySymbol(m.currency))}</div>
         </div>
       `).join('')}
     `).join('')}

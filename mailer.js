@@ -23,7 +23,7 @@ async function sendViaBrevo({ to, subject, text, html }) {
     method: 'POST',
     headers: { 'api-key': process.env.BREVO_API_KEY, 'content-type': 'application/json', accept: 'application/json' },
     body: JSON.stringify({
-      sender: { name: process.env.MAIL_FROM_NAME || 'صحنك', email: process.env.MAIL_FROM_EMAIL },
+      sender: { name: process.env.MAIL_FROM_NAME || 'Sahnak', email: process.env.MAIL_FROM_EMAIL },
       to: [{ email: to }],
       subject,
       textContent: text,
@@ -52,30 +52,33 @@ async function deliver(msg, devLine) {
   return { simulated: true };
 }
 
+// كل رسائل العملاء بالإنجليزية (لغة مشتركة لجمهور عالمي)، بغضّ النظر عن لغة واجهة الموقع
+const emailShell = (inner) => `<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:8px;color:#231a14;">${inner}
+  <p style="color:#7a6a5c;font-size:12px;margin-top:28px;">Sahnak — digital menus for restaurants and cafes.</p></div>`;
+
 async function sendVerificationEmail(to, code) {
   return deliver({
     to,
-    subject: 'رمز التحقق - صحنك',
-    text: `رمز التحقق الخاص بك هو: ${code}\nصالح لمدة 10 دقائق.`,
-    html: `<div dir="rtl" style="font-family:sans-serif">
-      <h2>رمز التحقق الخاص بك في صحنك</h2>
-      <p style="font-size:28px;font-weight:bold;letter-spacing:4px;">${code}</p>
-      <p>هذا الرمز صالح لمدة 10 دقائق. إن لم تطلب هذا الرمز يمكنك تجاهل هذه الرسالة.</p>
-    </div>`
+    subject: 'Your Sahnak verification code',
+    text: `Your Sahnak verification code is: ${code}\n\nIt is valid for 10 minutes. If you did not request it, you can safely ignore this email.`,
+    html: emailShell(`
+      <h2 style="margin:0 0 12px;">Your Sahnak verification code</h2>
+      <p>Enter this code to finish creating your account:</p>
+      <p style="font-size:30px;font-weight:bold;letter-spacing:5px;margin:16px 0;">${code}</p>
+      <p style="color:#7a6a5c;font-size:13px;">This code is valid for 10 minutes. If you did not request it, you can safely ignore this email.</p>`)
   }, `[وضع تجريبي - لا يوجد إعداد بريد] رمز التحقق لـ ${to}: ${code}`);
 }
 
 async function sendPasswordResetEmail(to, link) {
   return deliver({
     to,
-    subject: 'استعادة كلمة المرور - صحنك',
-    text: `اضغط الرابط التالي لتعيين كلمة مرور جديدة:\n${link}\nصالح لمدة 30 دقيقة. إن لم تطلب هذا يمكنك تجاهل الرسالة.`,
-    html: `<div dir="rtl" style="font-family:sans-serif">
-      <h2>استعادة كلمة المرور في صحنك</h2>
-      <p>اضغط الزر التالي لتعيين كلمة مرور جديدة:</p>
-      <p><a href="${link}" style="background:#e0632a;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;display:inline-block;">تعيين كلمة مرور جديدة</a></p>
-      <p style="color:#7a6a5c;font-size:13px;">هذا الرابط صالح لمدة 30 دقيقة. إن لم تطلب هذا يمكنك تجاهل هذه الرسالة.</p>
-    </div>`
+    subject: 'Reset your Sahnak password',
+    text: `We received a request to reset your Sahnak password.\n\nOpen this link to choose a new password:\n${link}\n\nThe link is valid for 30 minutes. If you did not request it, you can safely ignore this email.`,
+    html: emailShell(`
+      <h2 style="margin:0 0 12px;">Reset your Sahnak password</h2>
+      <p>We received a request to reset your password. Click the button below to choose a new one:</p>
+      <p style="margin:20px 0;"><a href="${link}" style="background:#e0632a;color:#ffffff;padding:12px 24px;border-radius:10px;text-decoration:none;display:inline-block;font-weight:bold;">Choose a new password</a></p>
+      <p style="color:#7a6a5c;font-size:13px;">This link is valid for 30 minutes. If you did not request it, you can safely ignore this email.</p>`)
   }, `[وضع تجريبي - لا يوجد إعداد بريد] رابط استعادة كلمة المرور لـ ${to}: ${link}`);
 }
 

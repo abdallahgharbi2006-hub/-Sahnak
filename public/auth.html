@@ -38,6 +38,7 @@
     <input id="pass1" type="password" data-i18n-ph="ph_pass" placeholder="8 أحرف على الأقل">
     <label data-i18n="lbl_pass2">تأكيد كلمة المرور</label>
     <input id="pass2" type="password" data-i18n-ph="ph_pass2" placeholder="أعد كتابة كلمة المرور">
+    <p class="hint" style="margin-top:14px;"><span data-i18n="legal_agree"></span><a href="/terms.html" target="_blank" style="color:var(--brand);" data-i18n="legal_terms"></a><span data-i18n="legal_and"></span><a href="/privacy.html" target="_blank" style="color:var(--brand);" data-i18n="legal_privacy"></a></p>
     <button class="btn" style="width:100%;margin-top:14px;" onclick="requestCode()" data-i18n="btn_send_code">إرسال رمز التحقق</button>
     <div id="err1" class="err"></div>
   </div>
@@ -74,15 +75,8 @@
   <div class="card" id="forgotStep" style="display:none;">
     <h3 style="margin:0 0 6px;" data-i18n="forgot_title">استعادة كلمة المرور</h3>
     <p style="color:var(--sub);font-size:13px;margin:0 0 10px;" data-i18n="forgot_sub">أدخل البريد الإلكتروني أو رقم الهاتف الذي سجّلت به.</p>
-    <label data-i18n="forgot_id_label">البريد الإلكتروني أو رقم الهاتف</label>
-    <input id="forgotIdentifier" type="text" placeholder="name@example.com أو +216XXXXXXXX">
-    <div id="recoveryEmailBlock" style="display:none;">
-      <div class="demo-note" style="background:#fbe8c9;color:var(--draft);margin-top:10px;" data-i18n="recovery_note">
-        هذا الحساب مسجّل برقم هاتف. أدخل بريدك الإلكتروني لإرسال رابط الاستعادة إليه.
-      </div>
-      <label data-i18n="recovery_email_label">بريدك الإلكتروني</label>
-      <input id="forgotRecoveryEmail" type="email" placeholder="name@example.com">
-    </div>
+    <label data-i18n="forgot_id_label">البريد الإلكتروني</label>
+    <input id="forgotIdentifier" type="email" placeholder="name@example.com">
     <button class="btn" style="width:100%;margin-top:14px;" onclick="sendResetLink()" data-i18n="btn_send_reset">إرسال رابط الاستعادة</button>
     <div id="forgotErr" class="err"></div>
     <div id="forgotOk" class="ok" style="display:none;"></div>
@@ -107,14 +101,12 @@ function switchMode(mode){
 function showForgot(){
   document.getElementById('loginStep').style.display = 'none';
   document.getElementById('forgotStep').style.display = 'block';
-  document.getElementById('recoveryEmailBlock').style.display = 'none';
   document.getElementById('forgotErr').textContent = '';
   document.getElementById('forgotOk').style.display = 'none';
   document.getElementById('forgotDevNote').style.display = 'none';
 }
 async function sendResetLink(){
   const identifier = document.getElementById('forgotIdentifier').value.trim();
-  const recoveryEmail = document.getElementById('forgotRecoveryEmail').value.trim();
   const err = document.getElementById('forgotErr');
   const ok = document.getElementById('forgotOk');
   const dev = document.getElementById('forgotDevNote');
@@ -122,20 +114,15 @@ async function sendResetLink(){
   try{
     const r = await fetch('/api/password/forgot', {
       method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
-      body: JSON.stringify({ identifier, recoveryEmail: recoveryEmail || undefined })
+      body: JSON.stringify({ identifier })
     });
     const data = await r.json();
     if(!r.ok){ err.textContent = Sahnak.err(data); return; }
-    if(data.needsEmail){
-      document.getElementById('recoveryEmailBlock').style.display = 'block';
-      err.textContent = t('recovery_note');
-      return;
-    }
     ok.style.display = 'block';
-    ok.textContent = t('pending_msg') === t('pending_msg') ? (Sahnak.getLang()==='ar' ? 'تم إرسال رابط الاستعادة إلى ' : (Sahnak.getLang()==='fr' ? 'Lien envoyé à ' : 'Reset link sent to ')) + (data.sentTo || '') : '';
+    ok.textContent = t('reset_sent_prefix') + ' ' + (data.sentTo || identifier);
     if(data.simulated){
       dev.style.display = 'block';
-      dev.textContent = '📧 ' + (Sahnak.getLang()==='ar' ? 'لا يوجد إعداد SMTP حقيقي بعد — افتح سجلات الخادم (Logs) لترى الرابط.' : (Sahnak.getLang()==='fr' ? 'SMTP non configuré — consultez les journaux du serveur (Logs) pour voir le lien.' : 'No real SMTP configured yet — check the server Logs to see the link.'));
+      dev.textContent = '📧 ' + t('dev_note_smtp');
     }
   }catch(e){ err.textContent = t('err_server'); }
 }
@@ -145,7 +132,7 @@ function switchMethod(m){
   document.getElementById('mPhone').classList.toggle('active', m==='phone');
   const inp = document.getElementById('id1');
   if(m==='email'){ inp.type='email'; inp.placeholder='name@example.com'; document.getElementById('idLabel').textContent=t('lbl_email'); }
-  else{ inp.type='tel'; inp.placeholder='+216XXXXXXXX'; document.getElementById('idLabel').textContent=t('lbl_phone'); }
+  else{ inp.type='tel'; inp.placeholder='+XXX XXXXXXXX'; document.getElementById('idLabel').textContent=t('lbl_phone'); }
   inp.value='';
 }
 function switchLoginMethod(m){
@@ -154,7 +141,7 @@ function switchLoginMethod(m){
   document.getElementById('lmPhone').classList.toggle('active', m==='phone');
   const inp = document.getElementById('loginId');
   if(m==='email'){ inp.type='email'; inp.placeholder='name@example.com'; document.getElementById('loginIdLabel').textContent=t('lbl_email'); }
-  else{ inp.type='tel'; inp.placeholder='+216XXXXXXXX'; document.getElementById('loginIdLabel').textContent=t('lbl_phone'); }
+  else{ inp.type='tel'; inp.placeholder='+XXX XXXXXXXX'; document.getElementById('loginIdLabel').textContent=t('lbl_phone'); }
   inp.value='';
 }
 
