@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { initDB, readDB, writeDB, flush } = require('./db');
-const { sendVerificationEmail, sendPasswordResetEmail } = require('./mailer');
+const { sendVerificationEmail, sendPasswordResetEmail, sendNewClaimNotification } = require('./mailer');
 const { sendVerificationSms } = require('./sms');
 
 const app = express();
@@ -222,6 +222,15 @@ app.post('/api/billing/manual-claim', authRequired, (req, res) => {
   };
   db.paymentClaims.push(claim);
   writeDB(db);
+
+  // نُعلم صاحب المنصة بالبريد بالطلب الجديد فقط (لا بالطلب المكرر). لا ننتظر الإرسال، وفشله لا يؤثر على رد الزبون.
+  const notifyTo = process.env.ADMIN_NOTIFY_EMAIL || process.env.CONTACT_EMAIL || process.env.MAIL_FROM_EMAIL;
+  if (notifyTo) {
+    sendNewClaimNotification(notifyTo, claim, `${APP_URL}/admin-payments.html`)
+      .catch(e => console.error('فشل إرسال إشعار طلب الاشتراك:', e.message));
+  } else {
+    console.warn('تنبيه: لا يوجد بريد لإشعارك بطلبات الاشتراك. اضبط ADMIN_NOTIFY_EMAIL.');
+  }
   res.json({ ok: true, claim });
 });
 

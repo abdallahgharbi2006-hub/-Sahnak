@@ -82,4 +82,26 @@ async function sendPasswordResetEmail(to, link) {
   }, `[وضع تجريبي - لا يوجد إعداد بريد] رابط استعادة كلمة المرور لـ ${to}: ${link}`);
 }
 
-module.exports = { sendVerificationEmail, sendPasswordResetEmail };
+const escHtml = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// إشعار داخلي لصاحب المنصة عند وصول طلب اشتراك جديد.
+// بالعربية لأنه موجّه لك أنت وليس للعملاء. حقول المستخدم تُهرَّب قبل وضعها في الـHTML.
+async function sendNewClaimNotification(to, claim, adminUrl) {
+  const when = new Date(claim.createdAt).toUTCString();
+  const note = claim.note ? claim.note : '—';
+  return deliver({
+    to,
+    subject: `طلب اشتراك جديد — ${claim.identifier}`,
+    text: `وصل طلب اشتراك جديد في صحنك.\n\nالحساب: ${claim.identifier}\nالملاحظة: ${note}\nالتاريخ: ${when}\n\nتحقق أولًا من وصول المبلغ فعلًا إلى حسابك، ثم افتح لوحة المشرف للقبول أو الرفض:\n${adminUrl}`,
+    html: `<div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px;color:#231a14;line-height:1.9;">
+      <h2 style="margin:0 0 12px;">طلب اشتراك جديد 🔔</h2>
+      <p style="margin:6px 0;"><b>الحساب:</b> ${escHtml(claim.identifier)}</p>
+      <p style="margin:6px 0;"><b>الملاحظة:</b> ${escHtml(note)}</p>
+      <p style="margin:6px 0;"><b>التاريخ (UTC):</b> ${escHtml(when)}</p>
+      <p style="margin:16px 0 6px;">تحقق أولًا من وصول المبلغ فعلًا إلى حسابك، ثم راجع الطلب:</p>
+      <p style="margin:12px 0;"><a href="${escHtml(adminUrl)}" style="background:#e0632a;color:#ffffff;padding:12px 24px;border-radius:10px;text-decoration:none;display:inline-block;font-weight:bold;">فتح لوحة المشرف</a></p>
+    </div>`
+  }, `[وضع تجريبي - لا يوجد إعداد بريد] طلب اشتراك جديد من ${claim.identifier} (ملاحظة: ${claim.note || '—'}) — راجعه في ${adminUrl}`);
+}
+
+module.exports = { sendVerificationEmail, sendPasswordResetEmail, sendNewClaimNotification };
